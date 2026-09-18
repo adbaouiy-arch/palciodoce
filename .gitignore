@@ -54,3 +54,6 @@ ui-debug.log
 firebase-debug.log
 /.dataconnect
 
+
+# Generated env-var dump for the hosting dashboard — contains secrets.
+/vercel-env.txt

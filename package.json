@@ -31,9 +31,11 @@
     "prod:export": "DOTENV_CONFIG_PATH=.env.production tsx scripts/export-data.ts",
     "prod:restore": "DOTENV_CONFIG_PATH=.env.production tsx scripts/restore-data.ts",
     "prod:verify": "DOTENV_CONFIG_PATH=.env.production tsx scripts/verify-production.ts",
+    "vercel:env": "tsx scripts/vercel-env.ts",
     "prod:grant": "DOTENV_CONFIG_PATH=.env.production tsx scripts/admin-access.ts grant",
     "prod:revoke": "DOTENV_CONFIG_PATH=.env.production tsx scripts/admin-access.ts revoke",
-    "prod:list": "DOTENV_CONFIG_PATH=.env.production tsx scripts/admin-access.ts list"
+    "prod:list": "DOTENV_CONFIG_PATH=.env.production tsx scripts/admin-access.ts list",
+    "prod:domains": "DOTENV_CONFIG_PATH=.env.production tsx scripts/auth-domains.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",
