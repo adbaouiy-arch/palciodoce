@@ -12,7 +12,26 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Prisma-generated client: not hand-written, and already carries its
+    // own @ts-nocheck / lint-disable banners.
+    "src/generated/**",
   ]),
+  {
+    rules: {
+      // A leading underscore marks a binding that is deliberately unused —
+      // a parameter kept for signature compatibility, or a key discarded
+      // while destructuring the rest of an object.
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

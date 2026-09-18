@@ -1,0 +1,290 @@
+// Palácio Doce — multilingual e-commerce database schema
+// Designed from the ground up for PT (default) / EN / AR content,
+// with room to add more locales later (FR, ES, ...) without restructuring.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Locale {
+  pt
+  en
+  ar
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  OUT_FOR_DELIVERY
+  COMPLETED
+  CANCELLED
+}
+
+enum FulfillmentMethod {
+  DELIVERY
+  PICKUP
+}
+
+enum PaymentMethod {
+  MBWAY
+  BANK_TRANSFER
+  CASH_ON_PICKUP
+  CASH_ON_DELIVERY
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+// ---------------------------------------------------------------------------
+// Admin
+// ---------------------------------------------------------------------------
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("admin")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("admin_users")
+}
+
+// ---------------------------------------------------------------------------
+// Categories (multilingual)
+// ---------------------------------------------------------------------------
+
+model Category {
+  id        String   @id @default(cuid())
+  key       String   @unique // stable machine key, e.g. "cakes", "sweets"
+  position  Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  translations CategoryTranslation[]
+  products     Product[]
+
+  @@map("categories")
+}
+
+model CategoryTranslation {
+  id       String @id @default(cuid())
+  locale   Locale
+  name     String
+  slug     String
+  description String?
+  seoTitle       String?
+  seoDescription String?
+
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String
+
+  @@unique([categoryId, locale])
+  @@unique([locale, slug])
+  @@map("category_translations")
+}
+
+// ---------------------------------------------------------------------------
+// Products (multilingual)
+// ---------------------------------------------------------------------------
+
+model Product {
+  id        String   @id @default(cuid())
+  sku       String   @unique
+  priceCents Int // price stored in cents, EUR only (currency remains EUR)
+  isActive   Boolean  @default(true)
+  isFeatured Boolean  @default(false)
+  stock      Int?     // null = unlimited / made-to-order
+  weightGrams Int?
+  position   Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId String?
+
+  images       ProductImage[]
+  translations ProductTranslation[]
+  orderItems   OrderItem[]
+
+  @@map("products")
+}
+
+model ProductImage {
+  id       String @id @default(cuid())
+  url      String
+  alt      String? // fallback alt text; localized alt lives per-translation if needed
+  position Int     @default(0)
+
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+
+  @@map("product_images")
+}
+
+// One row per (product, locale). This is the core of the multilingual
+// product system: every editable, language-specific field for a product
+// lives here, while shared data (price, SKU, stock, images) lives on Product.
+model ProductTranslation {
+  id     String @id @default(cuid())
+  locale Locale
+
+  name              String
+  slug              String
+  shortDescription  String
+  description       String
+  ingredients       String
+  allergens         String
+  storageInformation String
+
+  seoTitle       String
+  seoDescription String
+
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+
+  @@unique([productId, locale])
+  @@unique([locale, slug])
+  @@map("product_translations")
+}
+
+// ---------------------------------------------------------------------------
+// Informational pages (About, Contact, Privacy, etc.) — multilingual
+// ---------------------------------------------------------------------------
+
+model Page {
+  id        String   @id @default(cuid())
+  key       String   @unique // "about", "contact", "privacy", "terms", "faq"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  translations PageTranslation[]
+
+  @@map("pages")
+}
+
+model PageTranslation {
+  id     String @id @default(cuid())
+  locale Locale
+
+  title          String
+  content        String // rich text / markdown
+  seoTitle       String?
+  seoDescription String?
+
+  page   Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  pageId String
+
+  @@unique([pageId, locale])
+  @@map("page_translations")
+}
+
+// ---------------------------------------------------------------------------
+// Orders
+// ---------------------------------------------------------------------------
+
+model Order {
+  id          String   @id @default(cuid())
+  orderNumber String   @unique // human-friendly reference, e.g. PD-20260916-0001
+  orderLanguage Locale @default(pt) // language the order was placed in — used for confirmation emails & customer-facing docs
+
+  customerName  String
+  customerEmail String
+  customerPhone String
+
+  fulfillmentMethod FulfillmentMethod
+  deliveryAddress   String?
+  deliveryCity      String?
+  deliveryPostalCode String?
+  pickupNotes       String?
+  requestedDate     DateTime?
+  notes             String?
+
+  paymentMethod PaymentMethod
+  paymentStatus PaymentStatus @default(PENDING)
+
+  subtotalCents Int
+  deliveryFeeCents Int @default(0)
+  totalCents    Int
+
+  status    OrderStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  items OrderItem[]
+
+  @@map("orders")
+}
+
+// Snapshot line item: stores the product name/price *as shown to the customer*
+// in their chosen order_language at time of purchase, so historical orders
+// remain accurate even if the product is later edited or removed.
+model OrderItem {
+  id        String @id @default(cuid())
+  quantity  Int
+  unitPriceCents Int
+  totalPriceCents Int
+
+  productNameSnapshot String
+  productSlugSnapshot String
+
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  product   Product? @relation(fields: [productId], references: [id])
+  productId String?
+
+  @@map("order_items")
+}
+
+// ---------------------------------------------------------------------------
+// Contact form submissions
+// ---------------------------------------------------------------------------
+
+// Messages sent from the contact page. Stored rather than only emailed
+// so nothing is lost if mail delivery fails, and so the team can work
+// through enquiries from the admin area. `locale` records the language
+// the visitor wrote in, so replies go out in the same language.
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  locale    Locale
+  isHandled Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("contact_messages")
+}
+
+// ---------------------------------------------------------------------------
+// GDPR: consent log (cookie/marketing consent audit trail)
+// ---------------------------------------------------------------------------
+
+model ConsentLog {
+  id          String   @id @default(cuid())
+  visitorId   String // anonymous id stored in a cookie
+  necessary   Boolean  @default(true)
+  analytics   Boolean  @default(false)
+  marketing   Boolean  @default(false)
+  locale      Locale
+  createdAt   DateTime @default(now())
+
+  @@map("consent_logs")
+}

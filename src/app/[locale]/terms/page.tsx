@@ -1,0 +1,40 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import type { AppLocale } from "@/i18n/routing";
+import { ContentPage } from "@/components/content-page";
+import { getPage } from "@/lib/data/pages";
+import { buildPageMetadata } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale: rawLocale } = await params;
+  const locale = rawLocale as AppLocale;
+  const page = await getPage(locale, "terms");
+  if (!page) return {};
+
+  return buildPageMetadata({
+    locale,
+    href: "/terms",
+    title: page.seoTitle,
+    description: page.seoDescription,
+  });
+}
+
+export default async function TermsPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale: rawLocale } = await params;
+  const locale = rawLocale as AppLocale;
+
+  const page = await getPage(locale, "terms");
+  if (!page) {
+    notFound();
+  }
+
+  return <ContentPage page={page} locale={locale} />;
+}

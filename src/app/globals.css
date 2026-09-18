@@ -1,26 +1,483 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-cream: #fdf8f2;
+  --color-cream-dark: #f6ecdf;
+  --color-paper: #fffdf9;
+  --color-cocoa: #3a2419;
+  /*
+    Secondary text. Darkened from #5c4132 so it still clears WCAG AA (4.5:1)
+    against the densest part of the animated background, where several
+    aurora layers overlap. On plain cream it now measures 10.8:1, up from
+    8.8:1 — the hierarchy against `cocoa` is preserved, it is simply no
+    longer the weakest link.
+  */
+  --color-cocoa-soft: #4e3427;
+  --color-gold: #b8863b;
+  /*
+    Gold is only 3.05:1 on cream, which is fine for borders and icons
+    (non-text UI needs 3:1) but fails AA for text. `gold-deep` is the
+    text-safe variant at 4.96:1 on cream.
+  */
+  --color-gold-deep: #8f6420;
+  --color-gold-light: #d9ac66;
+  --color-berry: #8a2f3f;
+  --color-line: #e7d9c4;
+
+  --font-heading: var(--font-heading-latin), ui-serif, Georgia, serif;
+  --font-body: var(--font-body-latin), ui-sans-serif, system-ui, sans-serif;
+
+  /*
+    Translucent tints for the ambient background (see "Ambient motion").
+
+    Written as explicit rgb()/alpha rather than color-mix(), deliberately.
+    Tailwind compiles `color-mix()` with an @supports guard whose fallback
+    is the colour at FULL strength — so on a browser without color-mix
+    these soft washes would render as solid gold and berry blobs. A
+    fallback louder than the intended value is the wrong direction, and
+    these values need no fallback at all.
+
+    Kept next to the palette above so a brand colour change is a two-line
+    edit rather than a hunt through gradient stops.
+  */
+  /*
+    Aurora strengths are capped by a measured contrast budget, not by taste.
+    All four orbs are large and drifting, so they can and do overlap; the
+    worst case (every layer stacked, plus the vignette) composites to
+    #c8a281, where `cocoa` reads 6.2:1 and `cocoa-soft` 4.85:1 — both
+    passing AA with margin. Raising these further breaks secondary text on
+    long-form pages, which put prose directly on the background.
+  */
+  --pd-gold-core: rgb(184 134 59 / 28%);
+  --pd-gold-edge: rgb(184 134 59 / 15%);
+  --pd-amber-core: rgb(217 172 102 / 34%);
+  --pd-amber-edge: rgb(217 172 102 / 18%);
+  --pd-berry-core: rgb(138 47 63 / 10%);
+  --pd-berry-edge: rgb(138 47 63 / 5%);
+  --pd-rose-core: rgb(138 47 63 / 6%);
+  --pd-rose-edge: rgb(138 47 63 / 3%);
+
+  --pd-dust-gold: rgb(184 134 59 / 45%);
+  --pd-dust-cocoa: rgb(58 36 25 / 18%);
+  --pd-sheen-strong: rgb(255 253 249 / 75%);
+  --pd-sheen-soft: rgb(255 253 249 / 55%);
+  --pd-vignette: rgb(58 36 25 / 7%);
+  --pd-glow: rgb(184 134 59 / 20%);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-cream: var(--color-cream);
+  --color-cream-dark: var(--color-cream-dark);
+  --color-paper: var(--color-paper);
+  --color-cocoa: var(--color-cocoa);
+  --color-cocoa-soft: var(--color-cocoa-soft);
+  --color-gold: var(--color-gold);
+  --color-gold-deep: var(--color-gold-deep);
+  --color-gold-light: var(--color-gold-light);
+  --color-berry: var(--color-berry);
+  --color-line: var(--color-line);
+
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/*
+  Arabic typography is a deliberate, distinct system — not the Latin
+  stack with alignment flipped. El Messiri (headings) and Noto Sans
+  Arabic (body) are swapped in via CSS variables the moment `dir="rtl"`
+  is set on <html>, so only the fonts needed for the active locale are
+  ever fetched by the browser (see src/lib/fonts.ts for details).
+*/
+[dir="rtl"] {
+  --font-heading: var(--font-heading-arabic), ui-serif, serif;
+  --font-body: var(--font-body-arabic), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  /* `data-scroll-behavior` tells Next.js to suppress smooth scrolling during
+     route transitions, so only in-page anchor jumps animate. */
+  scroll-behavior: smooth;
+  background: var(--color-cream);
+}
+
+/*
+  Transparent so the fixed, negatively-stacked `.pd-bg` layer is visible
+  through it. <html> keeps the cream fill as the fallback for any moment
+  before that layer paints.
+*/
+body {
+  background: transparent;
+  color: var(--color-cocoa);
+  font-family: var(--font-body);
+}
+
+/* Headings use the display/heading font stack (Playfair Display for
+   Latin scripts, El Messiri for Arabic — see LocaleFonts). */
+h1,
+h2,
+h3,
+h4,
+.font-heading {
+  font-family: var(--font-heading);
+}
+
+/* Visually-hidden utility for screen-reader-only text (skip links,
+   status announcements, etc.) */
+.sr-only-focusable:not(:focus) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Ambient motion
+   ---------------------------------------------------------------------------
+   The site's background is a slow, warm drift of soft gold and berry light
+   over cream — meant to read as ambient depth in a pastry shop, not as a
+   moving graphic competing with the product photography.
+
+   Everything here animates `transform` and `opacity` only. Those are the
+   two properties a browser can composite on the GPU without re-running
+   layout or paint, which is what keeps a permanently-running background
+   from costing scroll performance. Notably absent: `filter: blur()`, which
+   is expensive on large surfaces — the soft edges come from radial
+   gradients fading to transparent instead.
+
+   The `prefers-reduced-motion` block at the end of this file neutralises
+   all of it, leaving a still, and still attractive, gradient.
+   --------------------------------------------------------------------------- */
+
+/*
+  Fixed, behind everything, and inert to pointers. `z-index: -1` requires
+  <body> to stay transparent — see the `body` rule above; the base cream is
+  painted here and on <html> as a fallback.
+
+  The base is a gradient rather than a flat fill: light pooling at the top
+  and warmth settling at the bottom is what stops a large cream page from
+  reading as blank paper.
+*/
+.pd-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 120% 70% at 50% -15%,
+      var(--color-paper) 0%,
+      transparent 60%
+    ),
+    linear-gradient(
+      170deg,
+      var(--color-cream) 0%,
+      var(--color-cream-dark) 45%,
+      var(--color-cream) 100%
+    );
+}
+
+.pd-bg__orb {
+  position: absolute;
+  border-radius: 50%;
+  /* Fades to transparent, so no blur filter is needed for a soft edge. */
+  background: radial-gradient(
+    circle at center,
+    var(--pd-orb-core) 0%,
+    var(--pd-orb-edge) 42%,
+    transparent 70%
+  );
+  will-change: transform;
+}
+
+/*
+  Colour strengths are deliberately high enough to actually be seen. Every
+  hue here is light and warm, so body copy (cocoa, #3a2419) still clears
+  roughly 8:1 contrast against the densest part of any orb — well past the
+  4.5:1 WCAG AA threshold.
+*/
+.pd-bg__orb--gold {
+  --pd-orb-core: var(--pd-gold-core);
+  --pd-orb-edge: var(--pd-gold-edge);
+  width: 80vmax;
+  height: 80vmax;
+  top: -30vmax;
+  left: -24vmax;
+  animation: pd-drift-a 38s ease-in-out infinite;
+}
+
+.pd-bg__orb--berry {
+  --pd-orb-core: var(--pd-berry-core);
+  --pd-orb-edge: var(--pd-berry-edge);
+  width: 66vmax;
+  height: 66vmax;
+  bottom: -28vmax;
+  right: -20vmax;
+  animation: pd-drift-b 46s ease-in-out infinite;
+}
+
+.pd-bg__orb--warm {
+  --pd-orb-core: var(--pd-amber-core);
+  --pd-orb-edge: var(--pd-amber-edge);
+  width: 56vmax;
+  height: 56vmax;
+  top: 28%;
+  right: 4%;
+  animation: pd-drift-c 32s ease-in-out infinite;
+}
+
+.pd-bg__orb--rose {
+  --pd-orb-core: var(--pd-rose-core);
+  --pd-orb-edge: var(--pd-rose-edge);
+  width: 48vmax;
+  height: 48vmax;
+  top: 55%;
+  left: 2%;
+  animation: pd-drift-a 52s ease-in-out infinite reverse;
+}
+
+/*
+  Drifting sugar dust.
+
+  A repeating dot field translated by exactly one tile, which loops
+  seamlessly with no visible jump. Two layers at different scales and
+  speeds read as depth. Using a tiled gradient rather than a few dozen
+  positioned elements keeps this to two DOM nodes and one composited
+  transform each.
+*/
+.pd-bg__dust {
+  position: absolute;
+  /* Oversized so the translated edges never enter the viewport. */
+  inset: -10%;
+  background-image: radial-gradient(
+    circle,
+    var(--pd-dust-gold) 1px,
+    transparent 1.7px
+  );
+  background-size: 58px 58px;
+  animation: pd-dust-coarse 90s linear infinite;
+  will-change: transform;
+}
+
+.pd-bg__dust--fine {
+  background-image: radial-gradient(
+    circle,
+    var(--pd-dust-cocoa) 1px,
+    transparent 1.6px
+  );
+  background-size: 34px 34px;
+  opacity: 0.5;
+  animation: pd-dust-fine 130s linear infinite;
+}
+
+@keyframes pd-dust-coarse {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  /* Exactly one tile, so the loop is seamless. */
+  to {
+    transform: translate3d(-58px, -58px, 0);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes pd-dust-fine {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(34px, -34px, 0);
+  }
+}
+
+/*
+  Film grain, from an inline SVG turbulence tile. Gives the cream a printed,
+  papery quality instead of a flat digital wash. Static and rasterised once,
+  then repeated — no per-frame cost.
+*/
+.pd-bg__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.28;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Slight edge falloff, so the page has a centre of gravity. */
+.pd-bg__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 90% 80% at 50% 45%,
+    transparent 40%,
+    var(--pd-vignette) 100%
+  );
+}
+
+/*
+  A soft sheen of light over the whole layer, pooling top-left and
+  bottom-right. Sits above the orbs to knit them into one surface rather
+  than three separate blobs. Static: it is texture, not motion.
+*/
+.pd-bg__sheen {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 18% 22%, var(--pd-sheen-strong) 0%, transparent 42%),
+    radial-gradient(circle at 82% 78%, var(--pd-sheen-soft) 0%, transparent 46%);
+}
+
+@keyframes pd-drift-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(6vmax, 4vmax, 0) scale(1.08);
+  }
+}
+
+@keyframes pd-drift-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.04);
+  }
+  50% {
+    transform: translate3d(-7vmax, -5vmax, 0) scale(1);
+  }
+}
+
+@keyframes pd-drift-c {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translate3d(-4vmax, 6vmax, 0) scale(1.12);
+    opacity: 1;
+  }
+}
+
+/* --- Entrance -------------------------------------------------------------- */
+
+/*
+  Above-the-fold entrance. `both` fill mode matters: the element ends on the
+  visible keyframe, so if the animation is shortened to ~0 (reduced motion)
+  or never runs, the content still settles visible rather than stranded at
+  opacity 0. Stagger with `style={{ "--pd-delay": "120ms" }}`.
+*/
+.pd-rise {
+  animation: pd-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--pd-delay, 0ms);
+}
+
+@keyframes pd-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 1.25rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/*
+  Scroll-linked reveal, as a progressive enhancement.
+
+  The `opacity: 0` starting point lives *inside* both guards on purpose.
+  Gating on `@supports` alone would hide content permanently in a browser
+  that understands the keyframes but not the timeline, and applying it
+  regardless of `prefers-reduced-motion` would hide content from visitors
+  whose animations are suppressed. Default state is always visible.
+*/
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .pd-reveal {
+      animation: pd-rise 1s linear both;
+      animation-timeline: view();
+      animation-range: entry 5% cover 25%;
+    }
+  }
+}
+
+/* --- Continuous accents --------------------------------------------------- */
+
+/* Slow hover on the hero imagery, a few pixels of drift. */
+.pd-float {
+  animation: pd-float 9s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes pd-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -0.75rem, 0);
+  }
+}
+
+/* "Open / fresh today" indicator beside the hero eyebrow. */
+.pd-pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pd-pulse 2.4s ease-out infinite;
+}
+
+@keyframes pd-pulse {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+/*
+  Soft glow anchored to the hero image. Logical inset so it follows the
+  image when the grid order flips under `dir="rtl"`.
+*/
+.pd-hero-glow {
+  position: absolute;
+  z-index: -1;
+  inset-block-start: -10%;
+  inset-inline-end: -12%;
+  width: 46rem;
+  height: 46rem;
+  max-width: 120%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    var(--pd-glow) 0%,
+    transparent 68%
+  );
+  animation: pd-drift-c 28s ease-in-out infinite;
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
