@@ -81,9 +81,9 @@ async function postJson(path, payload) {
 /**
  * Finds an orderable product id.
  *
- * Prefers ids present in the shop page payload, so the test exercises
- * only what the running server exposes. Falls back to the SQLite file so
- * the suite still works if the markup changes shape.
+ * Prefers ids present in the shop page payload, so the test exercises only what
+ * the running server exposes. Falls back to reading Firestore directly, so the
+ * suite still works if the markup changes shape.
  */
 async function discoverProductId() {
   const shop = await get("/loja");
@@ -98,16 +98,20 @@ async function discoverProductId() {
   }
 
   try {
-    const { execFileSync } = await import("node:child_process");
-    const out = execFileSync(
-      "sqlite3",
-      [
-        "prisma/dev.db",
-        "select id from products where isActive=1 order by position limit 1;",
-      ],
-      { encoding: "utf8" },
-    ).trim();
-    return out || null;
+    // Imported lazily: the markup path almost always succeeds, and there is no
+    // reason to make this suite depend on database credentials to run at all.
+    const [{ getDb }, { COLLECTIONS }] = await Promise.all([
+      import("../src/lib/firebase/admin.ts"),
+      import("../src/lib/firebase/collections.ts"),
+    ]);
+
+    const snapshot = await getDb()
+      .collection(COLLECTIONS.products)
+      .where("isActive", "==", true)
+      .limit(1)
+      .get();
+
+    return snapshot.empty ? null : snapshot.docs[0].id;
   } catch {
     return null;
   }

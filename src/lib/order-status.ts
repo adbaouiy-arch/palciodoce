@@ -3,7 +3,7 @@ import {
   OrderStatus,
   PaymentMethod,
   PaymentStatus,
-} from "@/generated/prisma/enums";
+} from "@/lib/domain";
 
 /**
  * Maps order enums onto message keys.

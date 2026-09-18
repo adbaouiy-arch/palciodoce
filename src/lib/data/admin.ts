@@ -1,20 +1,48 @@
-import { prisma } from "@/lib/prisma";
-import type { AppLocale } from "@/i18n/routing";
+import {
+  AggregateField,
+  FieldValue,
+  Timestamp,
+  type DocumentData,
+  type Query,
+} from "firebase-admin/firestore";
+import { getDb } from "@/lib/firebase/admin";
+import { COLLECTIONS } from "@/lib/firebase/collections";
+import {
+  pickTranslation,
+  readTranslations,
+  requireDate,
+  toBoolean,
+  toDate,
+  toNullableNumber,
+  toNumberOr,
+  toStringOr,
+  toStringOrNull,
+} from "@/lib/firebase/mappers";
+import { routing, type AppLocale } from "@/i18n/routing";
 import {
   FulfillmentMethod,
   OrderStatus,
-  PaymentMethod,
   PaymentStatus,
-} from "@/generated/prisma/enums";
+  isFulfillmentMethod,
+  isOrderStatus,
+  isPaymentMethod,
+  isPaymentStatus,
+  type PaymentMethod,
+} from "@/lib/domain";
 
 /**
- * Read and write helpers for the admin area.
+ * Reads and writes for the admin area.
  *
- * These are separate from the customer-facing data layer because they
- * intentionally expose data customers never see — full contact details,
- * every order regardless of owner, unhandled enquiries. Keeping them in
- * their own module makes it obvious that anything importing this file
- * must be behind `requireAdmin()`.
+ * Separate from the customer-facing data layer because these intentionally
+ * expose what customers never see — full contact details, every order
+ * regardless of owner, unhandled enquiries. Anything importing this file must
+ * sit behind `requireAdmin()`.
+ *
+ * Unlike the catalogue modules, the queries here use real `orderBy` with
+ * filters, because order volume grows without bound. Those combinations need
+ * composite indexes, declared in `firestore.indexes.json`. The emulator does
+ * not enforce index requirements, so a missing declaration surfaces only in
+ * production — every query below has a matching entry in that file.
  */
 
 export type AdminOrderListItem = {
@@ -54,7 +82,46 @@ const OPEN_STATUSES: OrderStatus[] = [
   OrderStatus.OUT_FOR_DELIVERY,
 ];
 
+function toListItem(id: string, data: DocumentData): AdminOrderListItem {
+  return {
+    id,
+    orderNumber: toStringOr(data.orderNumber, id),
+    orderLanguage: toStringOr(data.orderLanguage, "pt") as AppLocale,
+    customerName: toStringOr(data.customerName, ""),
+    customerEmail: toStringOr(data.customerEmail, ""),
+    customerPhone: toStringOr(data.customerPhone, ""),
+    fulfillmentMethod: isFulfillmentMethod(data.fulfillmentMethod)
+      ? data.fulfillmentMethod
+      : FulfillmentMethod.PICKUP,
+    paymentMethod: isPaymentMethod(data.paymentMethod) ? data.paymentMethod : "MBWAY",
+    paymentStatus: isPaymentStatus(data.paymentStatus)
+      ? data.paymentStatus
+      : PaymentStatus.PENDING,
+    status: isOrderStatus(data.status) ? data.status : OrderStatus.PENDING,
+    totalCents: toNumberOr(data.totalCents, 0),
+    requestedDate: toDate(data.requestedDate),
+    createdAt: requireDate(data.createdAt),
+    itemCount: Array.isArray(data.items) ? data.items.length : 0,
+  };
+}
+
+async function countWhere(build: (q: Query) => Query): Promise<number> {
+  const snapshot = await build(getDb().collection(COLLECTIONS.orders))
+    .count()
+    .get();
+  return snapshot.data().count;
+}
+
 export async function getDashboardStats(): Promise<AdminDashboardStats> {
+  const db = getDb();
+  const orders = db.collection(COLLECTIONS.orders);
+
+  /*
+    Server-side aggregations rather than reading every document. `count()` and
+    `sum()` are billed per batch of index entries scanned, not per document, so
+    this stays cheap as the order table grows — and no order payload crosses
+    the wire just to be counted.
+  */
   const [
     totalOrders,
     openOrders,
@@ -63,24 +130,31 @@ export async function getDashboardStats(): Promise<AdminDashboardStats> {
     awaitingPayment,
     revenue,
     unhandledMessages,
-    grouped,
+    byStatus,
   ] = await Promise.all([
-    prisma.order.count(),
-    prisma.order.count({ where: { status: { in: OPEN_STATUSES } } }),
-    prisma.order.count({ where: { status: OrderStatus.COMPLETED } }),
-    prisma.order.count({ where: { status: OrderStatus.CANCELLED } }),
-    prisma.order.count({ where: { paymentStatus: PaymentStatus.PENDING } }),
-    // Revenue counts money actually received, so it excludes orders that
-    // are merely placed and unpaid, and excludes cancellations.
-    prisma.order.aggregate({
-      _sum: { totalCents: true },
-      where: {
-        paymentStatus: PaymentStatus.PAID,
-        status: { not: OrderStatus.CANCELLED },
-      },
-    }),
-    prisma.contactMessage.count({ where: { isHandled: false } }),
-    prisma.order.groupBy({ by: ["status"], _count: { _all: true } }),
+    countWhere((q) => q),
+    countWhere((q) => q.where("status", "in", OPEN_STATUSES)),
+    countWhere((q) => q.where("status", "==", OrderStatus.COMPLETED)),
+    countWhere((q) => q.where("status", "==", OrderStatus.CANCELLED)),
+    countWhere((q) => q.where("paymentStatus", "==", PaymentStatus.PENDING)),
+    // Revenue counts money actually received, so it excludes orders that are
+    // merely placed and unpaid, and excludes cancellations.
+    orders
+      .where("paymentStatus", "==", PaymentStatus.PAID)
+      .where("status", "!=", OrderStatus.CANCELLED)
+      .aggregate({ total: AggregateField.sum("totalCents") })
+      .get(),
+    db
+      .collection(COLLECTIONS.contactMessages)
+      .where("isHandled", "==", false)
+      .count()
+      .get(),
+    Promise.all(
+      Object.values(OrderStatus).map(async (status) => ({
+        status,
+        count: await countWhere((q) => q.where("status", "==", status)),
+      })),
+    ),
   ]);
 
   return {
@@ -89,12 +163,9 @@ export async function getDashboardStats(): Promise<AdminDashboardStats> {
     completedOrders,
     cancelledOrders,
     awaitingPayment,
-    revenueCents: revenue._sum.totalCents ?? 0,
-    unhandledMessages,
-    ordersByStatus: grouped.map((row) => ({
-      status: row.status as OrderStatus,
-      count: row._count._all,
-    })),
+    revenueCents: toNumberOr(revenue.data().total, 0),
+    unhandledMessages: unhandledMessages.data().count,
+    ordersByStatus: byStatus.filter((row) => row.count > 0),
   };
 }
 
@@ -106,38 +177,36 @@ export async function listOrders({
 }: {
   status?: OrderStatus;
   page?: number;
-} = {}): Promise<{ orders: AdminOrderListItem[]; total: number; pages: number }> {
-  const where = status ? { status } : {};
+} = {}): Promise<{
+  orders: AdminOrderListItem[];
+  total: number;
+  pages: number;
+}> {
+  const db = getDb();
   const safePage = Math.max(1, Math.floor(page));
 
-  const [rows, total] = await Promise.all([
-    prisma.order.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (safePage - 1) * ORDERS_PER_PAGE,
-      take: ORDERS_PER_PAGE,
-      include: { _count: { select: { items: true } } },
-    }),
-    prisma.order.count({ where }),
+  let base: Query = db.collection(COLLECTIONS.orders);
+  if (status) base = base.where("status", "==", status);
+
+  const [countSnapshot, pageSnapshot] = await Promise.all([
+    base.count().get(),
+    /*
+      Offset pagination. Firestore bills the skipped documents, so this is the
+      wrong tool for deep paging — but it preserves the existing page-number UI
+      and the admin rarely goes past the first few pages. Switch to cursor
+      paging (`startAfter` on the last `createdAt`) if that stops being true.
+    */
+    base
+      .orderBy("createdAt", "desc")
+      .offset((safePage - 1) * ORDERS_PER_PAGE)
+      .limit(ORDERS_PER_PAGE)
+      .get(),
   ]);
 
+  const total = countSnapshot.data().count;
+
   return {
-    orders: rows.map((row) => ({
-      id: row.id,
-      orderNumber: row.orderNumber,
-      orderLanguage: row.orderLanguage as AppLocale,
-      customerName: row.customerName,
-      customerEmail: row.customerEmail,
-      customerPhone: row.customerPhone,
-      fulfillmentMethod: row.fulfillmentMethod as FulfillmentMethod,
-      paymentMethod: row.paymentMethod as PaymentMethod,
-      paymentStatus: row.paymentStatus as PaymentStatus,
-      status: row.status as OrderStatus,
-      totalCents: row.totalCents,
-      requestedDate: row.requestedDate,
-      createdAt: row.createdAt,
-      itemCount: row._count.items,
-    })),
+    orders: pageSnapshot.docs.map((doc) => toListItem(doc.id, doc.data())),
     total,
     pages: Math.max(1, Math.ceil(total / ORDERS_PER_PAGE)),
   };
@@ -164,74 +233,47 @@ export type AdminOrderDetail = AdminOrderListItem & {
 export async function getAdminOrder(
   orderNumber: string,
 ): Promise<AdminOrderDetail | null> {
-  const row = await prisma.order.findUnique({
-    where: { orderNumber },
-    include: { items: true },
-  });
-  if (!row) return null;
+  const doc = await getDb()
+    .collection(COLLECTIONS.orders)
+    .doc(orderNumber.trim())
+    .get();
+
+  if (!doc.exists) return null;
+
+  const data = doc.data() ?? {};
+  const rawItems = Array.isArray(data.items) ? data.items : [];
 
   return {
-    id: row.id,
-    orderNumber: row.orderNumber,
-    orderLanguage: row.orderLanguage as AppLocale,
-    customerName: row.customerName,
-    customerEmail: row.customerEmail,
-    customerPhone: row.customerPhone,
-    fulfillmentMethod: row.fulfillmentMethod as FulfillmentMethod,
-    paymentMethod: row.paymentMethod as PaymentMethod,
-    paymentStatus: row.paymentStatus as PaymentStatus,
-    status: row.status as OrderStatus,
-    totalCents: row.totalCents,
-    subtotalCents: row.subtotalCents,
-    deliveryFeeCents: row.deliveryFeeCents,
-    requestedDate: row.requestedDate,
-    createdAt: row.createdAt,
-    deliveryAddress: row.deliveryAddress,
-    deliveryCity: row.deliveryCity,
-    deliveryPostalCode: row.deliveryPostalCode,
-    pickupNotes: row.pickupNotes,
-    notes: row.notes,
-    itemCount: row.items.length,
-    items: row.items.map((item) => ({
-      id: item.id,
-      quantity: item.quantity,
-      unitPriceCents: item.unitPriceCents,
-      totalPriceCents: item.totalPriceCents,
-      productNameSnapshot: item.productNameSnapshot,
-      productSlugSnapshot: item.productSlugSnapshot,
+    ...toListItem(doc.id, data),
+    deliveryAddress: toStringOrNull(data.deliveryAddress),
+    deliveryCity: toStringOrNull(data.deliveryCity),
+    deliveryPostalCode: toStringOrNull(data.deliveryPostalCode),
+    pickupNotes: toStringOrNull(data.pickupNotes),
+    notes: toStringOrNull(data.notes),
+    subtotalCents: toNumberOr(data.subtotalCents, 0),
+    deliveryFeeCents: toNumberOr(data.deliveryFeeCents, 0),
+    items: rawItems.map((item: DocumentData, index: number) => ({
+      id: `${doc.id}-${index}`,
+      quantity: toNumberOr(item?.quantity, 0),
+      unitPriceCents: toNumberOr(item?.unitPriceCents, 0),
+      totalPriceCents: toNumberOr(item?.totalPriceCents, 0),
+      productNameSnapshot: toStringOr(item?.productNameSnapshot, ""),
+      productSlugSnapshot: toStringOr(item?.productSlugSnapshot, ""),
     })),
   };
 }
 
 /**
- * Cancelling an order returns its reserved stock.
+ * Changes an order's status, returning reserved stock when it is cancelled.
  *
- * Without this, cancelling would quietly consume inventory forever: the
- * checkout decrements `stock` when the order is placed, so the units have
- * to be handed back when the order will never be fulfilled. Only products
- * with finite stock are affected — `null` means made-to-order.
+ * Without the restock, cancelling would quietly consume inventory forever:
+ * checkout decrements `stock` when the order is placed, so those units have to
+ * be handed back when the order will never be fulfilled.
+ *
+ * Runs in a transaction, and the early return when the status is unchanged is
+ * what makes cancelling an already-cancelled order a no-op rather than a
+ * second restock.
  */
-async function restoreStockForOrder(orderId: string): Promise<void> {
-  const items = await prisma.orderItem.findMany({
-    where: { orderId, productId: { not: null } },
-    select: { productId: true, quantity: true },
-  });
-
-  for (const item of items) {
-    if (!item.productId) continue;
-    const product = await prisma.product.findUnique({
-      where: { id: item.productId },
-      select: { stock: true },
-    });
-    if (!product || product.stock === null) continue;
-
-    await prisma.product.update({
-      where: { id: item.productId },
-      data: { stock: { increment: item.quantity } },
-    });
-  }
-}
-
 export async function updateOrderStatus({
   orderNumber,
   status,
@@ -239,24 +281,59 @@ export async function updateOrderStatus({
   orderNumber: string;
   status: OrderStatus;
 }): Promise<boolean> {
-  const existing = await prisma.order.findUnique({
-    where: { orderNumber },
-    select: { id: true, status: true },
+  const db = getDb();
+  const orderRef = db.collection(COLLECTIONS.orders).doc(orderNumber.trim());
+
+  return db.runTransaction(async (tx) => {
+    const orderDoc = await tx.get(orderRef);
+    if (!orderDoc.exists) return false;
+
+    const data = orderDoc.data() ?? {};
+    const current = isOrderStatus(data.status) ? data.status : OrderStatus.PENDING;
+    if (current === status) return true;
+
+    const isBecomingCancelled =
+      status === OrderStatus.CANCELLED && current !== OrderStatus.CANCELLED;
+
+    // Reads first: Firestore forbids a read after a write in a transaction.
+    const restock: { productId: string; stock: number; quantity: number }[] = [];
+    if (isBecomingCancelled) {
+      const items = Array.isArray(data.items) ? data.items : [];
+      const withProduct = items.filter(
+        (item: DocumentData) => typeof item?.productId === "string",
+      );
+
+      if (withProduct.length > 0) {
+        const refs = withProduct.map((item: DocumentData) =>
+          db.collection(COLLECTIONS.products).doc(item.productId as string),
+        );
+        const productDocs = await tx.getAll(...refs);
+
+        productDocs.forEach((productDoc, index) => {
+          if (!productDoc.exists) return;
+          const stock = toNullableNumber(productDoc.get("stock"));
+          // `null` means made-to-order, so there is nothing to give back.
+          if (stock === null) return;
+          restock.push({
+            productId: productDoc.id,
+            stock,
+            quantity: toNumberOr(withProduct[index]?.quantity, 0),
+          });
+        });
+      }
+    }
+
+    tx.update(orderRef, { status, updatedAt: FieldValue.serverTimestamp() });
+
+    for (const entry of restock) {
+      tx.update(db.collection(COLLECTIONS.products).doc(entry.productId), {
+        stock: entry.stock + entry.quantity,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
+
+    return true;
   });
-  if (!existing) return false;
-  if (existing.status === status) return true;
-
-  const isBecomingCancelled =
-    status === OrderStatus.CANCELLED &&
-    existing.status !== OrderStatus.CANCELLED;
-
-  await prisma.order.update({ where: { orderNumber }, data: { status } });
-
-  if (isBecomingCancelled) {
-    await restoreStockForOrder(existing.id);
-  }
-
-  return true;
 }
 
 export async function updatePaymentStatus({
@@ -266,15 +343,13 @@ export async function updatePaymentStatus({
   orderNumber: string;
   paymentStatus: PaymentStatus;
 }): Promise<boolean> {
-  const existing = await prisma.order.findUnique({
-    where: { orderNumber },
-    select: { id: true },
-  });
-  if (!existing) return false;
+  const ref = getDb().collection(COLLECTIONS.orders).doc(orderNumber.trim());
+  const doc = await ref.get();
+  if (!doc.exists) return false;
 
-  await prisma.order.update({
-    where: { orderNumber },
-    data: { paymentStatus },
+  await ref.update({
+    paymentStatus,
+    updatedAt: FieldValue.serverTimestamp(),
   });
   return true;
 }
@@ -294,31 +369,58 @@ export type AdminProductRow = {
 };
 
 /**
- * Product overview for the admin area, listed with the Portuguese name
- * (the admin area is Portuguese-only) plus which locales each product has
- * been translated into, so a missing translation is visible at a glance.
+ * Product overview for the admin area, listed with the Portuguese name (the
+ * admin area is Portuguese-only) plus which locales each product has been
+ * translated into, so a missing translation is visible at a glance.
  */
 export async function listAdminProducts(): Promise<AdminProductRow[]> {
-  const products = await prisma.product.findMany({
-    orderBy: { position: "asc" },
-    include: {
-      category: { include: { translations: { where: { locale: "pt" } } } },
-      translations: { select: { locale: true, name: true } },
-    },
-  });
+  const db = getDb();
 
-  return products.map((product) => ({
-    id: product.id,
-    sku: product.sku,
-    name:
-      product.translations.find((t) => t.locale === "pt")?.name ?? product.sku,
-    priceCents: product.priceCents,
-    stock: product.stock,
-    isActive: product.isActive,
-    isFeatured: product.isFeatured,
-    categoryName: product.category?.translations[0]?.name ?? null,
-    translationLocales: product.translations.map((t) => t.locale as AppLocale),
-  }));
+  // Includes inactive products, unlike the storefront reads.
+  const [productsSnapshot, categoriesSnapshot] = await Promise.all([
+    db.collection(COLLECTIONS.products).get(),
+    db.collection(COLLECTIONS.categories).get(),
+  ]);
+
+  // Category names resolved once into a map rather than per product — there is
+  // no join, so the alternative is one read per row.
+  const categoryNames = new Map<string, string>();
+  for (const doc of categoriesSnapshot.docs) {
+    const translations = readTranslations<{ name?: string }>(
+      doc.get("translations"),
+    );
+    const name = pickTranslation(translations, "pt")?.name;
+    if (name) categoryNames.set(doc.id, name);
+  }
+
+  return productsSnapshot.docs
+    .map((doc) => {
+      const data = doc.data();
+      const translations = readTranslations<{ name?: string }>(data.translations);
+      const sku = toStringOr(data.sku, doc.id);
+
+      return {
+        position: toNumberOr(data.position, 0),
+        row: {
+          id: doc.id,
+          sku,
+          name: toStringOr(translations.pt?.name, sku),
+          priceCents: toNumberOr(data.priceCents, 0),
+          stock: toNullableNumber(data.stock),
+          isActive: toBoolean(data.isActive),
+          isFeatured: toBoolean(data.isFeatured),
+          categoryName:
+            typeof data.categoryId === "string"
+              ? (categoryNames.get(data.categoryId) ?? null)
+              : null,
+          translationLocales: routing.locales.filter(
+            (locale) => translations[locale]?.name,
+          ),
+        },
+      };
+    })
+    .sort((a, b) => a.position - b.position)
+    .map((entry) => entry.row);
 }
 
 // --- Contact messages -----------------------------------------------------
@@ -334,21 +436,27 @@ export type AdminContactMessage = {
 };
 
 export async function listContactMessages(): Promise<AdminContactMessage[]> {
-  const rows = await prisma.contactMessage.findMany({
-    // Unhandled first, then newest — the queue reads as a to-do list.
-    orderBy: [{ isHandled: "asc" }, { createdAt: "desc" }],
-    take: 100,
-  });
+  // Unhandled first, then newest — the queue reads as a to-do list.
+  // Needs the composite index declared in firestore.indexes.json.
+  const snapshot = await getDb()
+    .collection(COLLECTIONS.contactMessages)
+    .orderBy("isHandled", "asc")
+    .orderBy("createdAt", "desc")
+    .limit(100)
+    .get();
 
-  return rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    email: row.email,
-    message: row.message,
-    locale: row.locale as AppLocale,
-    isHandled: row.isHandled,
-    createdAt: row.createdAt,
-  }));
+  return snapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      name: toStringOr(data.name, ""),
+      email: toStringOr(data.email, ""),
+      message: toStringOr(data.message, ""),
+      locale: toStringOr(data.locale, "pt") as AppLocale,
+      isHandled: toBoolean(data.isHandled),
+      createdAt: requireDate(data.createdAt),
+    };
+  });
 }
 
 export async function setContactMessageHandled({
@@ -358,5 +466,8 @@ export async function setContactMessageHandled({
   id: string;
   isHandled: boolean;
 }): Promise<void> {
-  await prisma.contactMessage.update({ where: { id }, data: { isHandled } });
+  await getDb()
+    .collection(COLLECTIONS.contactMessages)
+    .doc(id)
+    .update({ isHandled, updatedAt: Timestamp.now() });
 }

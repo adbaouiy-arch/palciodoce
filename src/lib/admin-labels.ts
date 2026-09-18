@@ -4,7 +4,7 @@ import {
   OrderStatus,
   PaymentMethod,
   PaymentStatus,
-} from "@/generated/prisma/enums";
+} from "@/lib/domain";
 
 /**
  * Portuguese labels for the admin area.

@@ -7,7 +7,7 @@ import {
   FulfillmentMethod,
   OrderStatus,
   PaymentStatus,
-} from "@/generated/prisma/enums";
+} from "@/lib/domain";
 import { formatPrice } from "@/lib/format-price";
 import { formatDate, formatDateTime } from "@/lib/format-date";
 import {

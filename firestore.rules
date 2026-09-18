@@ -1,0 +1,148 @@
+rules_version = '2';
+
+// ===========================================================================
+// Palácio Doce — Firestore security rules
+// ===========================================================================
+//
+// READ THIS BEFORE LOOSENING ANYTHING.
+//
+// The website is server-rendered and reaches Firestore through the Firebase
+// Admin SDK, which **bypasses these rules entirely**. So this file is not what
+// makes the application work — it is the blast door that limits what a browser,
+// a leaked web API key, or a hostile script can do by talking to Firestore
+// directly.
+//
+// That leads to two deliberate choices:
+//
+//  1. NO CLIENT WRITES. Anywhere. Every write in this system goes through
+//     server code that validates input with zod and, for orders, recomputes
+//     every monetary amount from stored product prices. A client write path
+//     would be a way around all of that — someone could post an order with a
+//     €0.01 total, or flip their own `isHandled` flags. There is no legitimate
+//     reason for a browser to write here, so nothing may.
+//
+//  2. READS ARE ALLOWED ONLY FOR THINGS ALREADY PUBLISHED ON THE SITE.
+//     Product and category copy, prices and images are on public pages
+//     already, so exposing them to a direct read leaks nothing. Orders,
+//     contact messages, consent records and the admin allowlist contain
+//     personal data and are denied outright.
+//
+// Anything not matched by a rule below is denied by default — Firestore has no
+// implicit allow. New collections are therefore closed until someone adds a
+// rule on purpose.
+// ===========================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -----------------------------------------------------------------------
+    // Helpers
+    // -----------------------------------------------------------------------
+
+    // True for a signed-in user carrying the `admin` custom claim.
+    //
+    // The claim is trustworthy because only the Admin SDK can set it (see
+    // scripts/grant-admin.ts) — a client cannot grant it to itself, and it is
+    // signed into the ID token. Being listed in `adminUsers` is what earns it.
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Catalogue documents are readable only while published. A draft or
+    // withdrawn product stays invisible.
+    //
+    // Note how this interacts with queries: for a `list`, Firestore requires
+    // the query itself to guarantee every result passes, so a client must ask
+    // `where('isActive', '==', true)`. A client cannot list everything and
+    // filter afterwards.
+    function isPublished() {
+      return resource.data.isActive == true;
+    }
+
+    // -----------------------------------------------------------------------
+    // Published catalogue — public read
+    // -----------------------------------------------------------------------
+
+    match /products/{productId} {
+      allow read: if isPublished() || isAdmin();
+      allow write: if false;
+    }
+
+    match /categories/{categoryId} {
+      allow read: if isPublished() || isAdmin();
+      allow write: if false;
+    }
+
+    // Informational pages (privacy policy, terms, cookie policy). Public by
+    // definition — they are linked in the footer of every page.
+    match /pages/{pageKey} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Slug indexes: {locale}_{slug} -> id. These exist to give Firestore the
+    // uniqueness guarantee it otherwise lacks, using the document ID. They
+    // hold no data beyond a pointer, and are needed to resolve a public URL.
+    match /productSlugs/{slugKey} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /categorySlugs/{slugKey} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // -----------------------------------------------------------------------
+    // Personal data — no public read, ever
+    // -----------------------------------------------------------------------
+
+    // Orders carry names, emails, phone numbers and delivery addresses.
+    //
+    // Customers reach their own order through the website, which checks a
+    // signed access token server-side, or through the tracking page, which
+    // requires the email the order was placed with. Neither route reads
+    // Firestore from the browser, so no client read is needed here — and
+    // order IDs are sequential (PD-20260916-0001), so a client read would be
+    // trivially enumerable.
+    match /orders/{orderNumber} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Contact-form submissions: names, emails and message bodies.
+    match /contactMessages/{messageId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // GDPR consent audit trail. Pseudonymous, but it is evidence — it must not
+    // be readable or, more importantly, alterable by the subject of the record.
+    match /consentLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // The authorisation allowlist itself. Never client-readable: publishing
+    // the set of administrator emails just hands an attacker a target list.
+    match /adminUsers/{uid} {
+      allow read, write: if false;
+    }
+
+    // Integrity-critical counters (the daily order-number sequence). Readable
+    // by nobody: the value is meaningless outside a server transaction, and
+    // exposing it leaks daily order volume.
+    match /counters/{counterId} {
+      allow read, write: if false;
+    }
+
+    // -----------------------------------------------------------------------
+    // Everything else
+    // -----------------------------------------------------------------------
+    // Explicit, so the intent is on the record rather than relying on the
+    // implicit default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

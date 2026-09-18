@@ -1,5 +1,30 @@
-import { prisma } from "@/lib/prisma";
-import type { AppLocale } from "@/i18n/routing";
+import { getDb } from "@/lib/firebase/admin";
+import { COLLECTIONS, slugDocId } from "@/lib/firebase/collections";
+import {
+  pickTranslation,
+  readTranslations,
+  requireDate,
+  toBoolean,
+  toNumberOr,
+  toStringOr,
+  toStringOrNull,
+} from "@/lib/firebase/mappers";
+import type { TranslationMap } from "@/lib/firebase/mappers";
+import { routing, type AppLocale } from "@/i18n/routing";
+
+/**
+ * Category reads, backed by Firestore.
+ *
+ * Note on sorting: the catalogue is deliberately sorted in memory rather than
+ * with `.orderBy()`. Combining an equality filter with an order on a different
+ * field (`where('isActive','==',true).orderBy('position')`) requires a
+ * composite index in Firestore — and the emulator does *not* enforce index
+ * requirements, so such a query passes locally and then fails in production
+ * with "The query requires an index". For a catalogue of a handful of
+ * categories, filtering on one field and sorting the result set here is both
+ * cheaper and impossible to get wrong. Order listings, which do grow, use
+ * declared indexes instead.
+ */
 
 export type CategorySummary = {
   id: string;
@@ -8,62 +33,141 @@ export type CategorySummary = {
   slug: string;
 };
 
-/**
- * All active categories, translated into the given locale, ordered for
- * display in navigation / filters. Falls back gracefully to an empty
- * name if a translation is somehow missing (should not happen given the
- * unique [categoryId, locale] constraint enforced by every write path).
- */
-export async function getCategories(locale: AppLocale): Promise<CategorySummary[]> {
-  const categories = await prisma.category.findMany({
-    where: { isActive: true },
-    orderBy: { position: "asc" },
-    include: {
-      translations: {
-        where: { locale },
-      },
-    },
-  });
+type CategoryTranslation = {
+  name?: string;
+  slug?: string;
+  description?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+};
 
-  return categories.map((category) => ({
-    id: category.id,
-    key: category.key,
-    name: category.translations[0]?.name ?? category.key,
-    slug: category.translations[0]?.slug ?? category.key,
-  }));
+export type CategoryDetail = {
+  id: string;
+  key: string;
+  isActive: boolean;
+  name: string;
+  slug: string;
+  description: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  /** Every locale this category has a slug in, for hreflang and the switcher. */
+  slugByLocale: Partial<Record<AppLocale, string>>;
+};
+
+function slugMap(
+  translations: TranslationMap<CategoryTranslation>,
+): Partial<Record<AppLocale, string>> {
+  const out: Partial<Record<AppLocale, string>> = {};
+  for (const locale of routing.locales) {
+    const slug = translations[locale]?.slug;
+    if (slug) out[locale] = slug;
+  }
+  return out;
 }
 
-export async function getCategoryBySlug(locale: AppLocale, slug: string) {
-  const translation = await prisma.categoryTranslation.findUnique({
-    where: { locale_slug: { locale, slug } },
-    include: { category: true },
-  });
+/**
+ * All active categories, translated into the given locale and ordered for
+ * display in navigation and filters.
+ */
+export async function getCategories(
+  locale: AppLocale,
+): Promise<CategorySummary[]> {
+  const snapshot = await getDb()
+    .collection(COLLECTIONS.categories)
+    .where("isActive", "==", true)
+    .get();
 
-  return translation;
+  return snapshot.docs
+    .map((doc) => {
+      const data = doc.data();
+      const translations = readTranslations<CategoryTranslation>(
+        data.translations,
+      );
+      const translation = pickTranslation(translations, locale);
+      const key = toStringOr(data.key, doc.id);
+
+      return {
+        position: toNumberOr(data.position, 0),
+        summary: {
+          id: doc.id,
+          key,
+          name: toStringOr(translation?.name, key),
+          slug: toStringOr(translation?.slug, key),
+        },
+      };
+    })
+    .sort((a, b) => a.position - b.position)
+    .map((entry) => entry.summary);
+}
+
+/**
+ * Resolves a localised slug to a category.
+ *
+ * Goes through the `categorySlugs` index rather than querying, because the
+ * document ID there is `{locale}_{slug}` — a single `get()` by key, and the
+ * same mechanism that enforces slug uniqueness on write.
+ */
+export async function getCategoryBySlug(
+  locale: AppLocale,
+  slug: string,
+): Promise<CategoryDetail | null> {
+  const db = getDb();
+
+  const slugDoc = await db
+    .collection(COLLECTIONS.categorySlugs)
+    .doc(slugDocId(locale, slug))
+    .get();
+  if (!slugDoc.exists) return null;
+
+  const categoryId = slugDoc.get("categoryId");
+  if (typeof categoryId !== "string") return null;
+
+  const doc = await db.collection(COLLECTIONS.categories).doc(categoryId).get();
+  if (!doc.exists) return null;
+
+  const data = doc.data() ?? {};
+  const translations = readTranslations<CategoryTranslation>(data.translations);
+  const translation = pickTranslation(translations, locale);
+  const key = toStringOr(data.key, doc.id);
+
+  return {
+    id: doc.id,
+    key,
+    isActive: toBoolean(data.isActive),
+    name: toStringOr(translation?.name, key),
+    slug: toStringOr(translation?.slug, slug),
+    description: toStringOrNull(translation?.description),
+    seoTitle: toStringOrNull(translation?.seoTitle),
+    seoDescription: toStringOrNull(translation?.seoDescription),
+    slugByLocale: slugMap(translations),
+  };
 }
 
 /**
  * Every active category with its slug in each locale, for the sitemap.
- * See `getProductSitemapEntries` — same reasoning: the slug differs per
- * language, so hreflang alternates need all of them.
+ * The slug differs per language, so hreflang alternates need all of them.
  */
 export async function getCategorySitemapEntries(): Promise<
   { slugByLocale: Partial<Record<AppLocale, string>>; updatedAt: Date }[]
 > {
-  const categories = await prisma.category.findMany({
-    where: { isActive: true },
-    orderBy: { position: "asc" },
-    select: {
-      updatedAt: true,
-      translations: { select: { locale: true, slug: true } },
-    },
-  });
+  const snapshot = await getDb()
+    .collection(COLLECTIONS.categories)
+    .where("isActive", "==", true)
+    .get();
 
-  return categories.map((category) => {
-    const slugByLocale: Partial<Record<AppLocale, string>> = {};
-    for (const translation of category.translations) {
-      slugByLocale[translation.locale as AppLocale] = translation.slug;
-    }
-    return { slugByLocale, updatedAt: category.updatedAt };
-  });
+  return snapshot.docs
+    .map((doc) => {
+      const data = doc.data();
+      return {
+        position: toNumberOr(data.position, 0),
+        entry: {
+          slugByLocale: slugMap(
+            readTranslations<CategoryTranslation>(data.translations),
+          ),
+          updatedAt: requireDate(data.updatedAt),
+        },
+      };
+    })
+    .sort((a, b) => a.position - b.position)
+    .map((row) => row.entry);
 }

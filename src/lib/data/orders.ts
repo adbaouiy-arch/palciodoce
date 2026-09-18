@@ -1,15 +1,34 @@
-import { prisma } from "@/lib/prisma";
+import {
+  FieldValue,
+  Timestamp,
+  type DocumentData,
+  type Transaction,
+} from "firebase-admin/firestore";
+import { getDb } from "@/lib/firebase/admin";
+import { COLLECTIONS, orderCounterDocId } from "@/lib/firebase/collections";
+import {
+  pickTranslation,
+  readTranslations,
+  requireDate,
+  toBoolean,
+  toDate,
+  toNullableNumber,
+  toNumberOr,
+  toStringOr,
+  toStringOrNull,
+} from "@/lib/firebase/mappers";
 import type { AppLocale } from "@/i18n/routing";
 import {
   FulfillmentMethod,
   OrderStatus,
-  PaymentMethod,
   PaymentStatus,
-} from "@/generated/prisma/enums";
-import {
-  calculateOrderTotals,
-  isPaymentMethodAllowed,
-} from "@/lib/order-pricing";
+  isFulfillmentMethod,
+  isOrderStatus,
+  isPaymentMethod,
+  isPaymentStatus,
+  type PaymentMethod,
+} from "@/lib/domain";
+import { calculateOrderTotals, isPaymentMethodAllowed } from "@/lib/order-pricing";
 
 export type OrderLineInput = { productId: string; quantity: number };
 
@@ -29,6 +48,16 @@ export type OrderFulfillmentInput = {
   notes?: string | null;
 };
 
+export type OrderItemSummary = {
+  id: string;
+  quantity: number;
+  unitPriceCents: number;
+  totalPriceCents: number;
+  productNameSnapshot: string;
+  productSlugSnapshot: string;
+  productId: string | null;
+};
+
 export type OrderSummary = {
   id: string;
   orderNumber: string;
@@ -40,6 +69,7 @@ export type OrderSummary = {
   deliveryAddress: string | null;
   deliveryCity: string | null;
   deliveryPostalCode: string | null;
+  pickupNotes: string | null;
   requestedDate: Date | null;
   notes: string | null;
   paymentMethod: PaymentMethod;
@@ -49,15 +79,7 @@ export type OrderSummary = {
   deliveryFeeCents: number;
   totalCents: number;
   createdAt: Date;
-  items: {
-    id: string;
-    quantity: number;
-    unitPriceCents: number;
-    totalPriceCents: number;
-    productNameSnapshot: string;
-    productSlugSnapshot: string;
-    productId: string | null;
-  }[];
+  items: OrderItemSummary[];
 };
 
 export type CreateOrderResult =
@@ -68,85 +90,153 @@ export type CreateOrderResult =
       unavailableProductIds?: string[];
     };
 
-/**
- * Builds the next human-friendly order reference, e.g. PD-20260916-0007.
- *
- * The counter restarts each day, which keeps references short and makes
- * them easy to read out over the phone. Because the value is derived from
- * a count it can race under concurrent checkouts; `orderNumber` is unique
- * in the schema and `createOrder` retries, so a collision costs one
- * retry rather than a corrupted order.
- */
-async function nextOrderNumber(now: Date): Promise<string> {
-  const startOfDay = new Date(now);
-  startOfDay.setHours(0, 0, 0, 0);
-  const startOfNextDay = new Date(startOfDay);
-  startOfNextDay.setDate(startOfNextDay.getDate() + 1);
-
-  const todayCount = await prisma.order.count({
-    where: { createdAt: { gte: startOfDay, lt: startOfNextDay } },
-  });
-
-  const datePart = [
-    startOfDay.getFullYear(),
-    String(startOfDay.getMonth() + 1).padStart(2, "0"),
-    String(startOfDay.getDate()).padStart(2, "0"),
-  ].join("");
-
-  return `PD-${datePart}-${String(todayCount + 1).padStart(4, "0")}`;
+/** Thrown inside the transaction to abort it with a specific cause. */
+class UnavailableItemsError extends Error {
+  constructor(public readonly productIds: string[]) {
+    super(`Unavailable products: ${productIds.join(", ")}`);
+    this.name = "UnavailableItemsError";
+  }
 }
 
-function toOrderSummary(order: {
-  id: string;
-  orderNumber: string;
-  orderLanguage: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  fulfillmentMethod: string;
-  deliveryAddress: string | null;
-  deliveryCity: string | null;
-  deliveryPostalCode: string | null;
-  requestedDate: Date | null;
-  notes: string | null;
-  paymentMethod: string;
-  paymentStatus: string;
-  status: string;
-  subtotalCents: number;
-  deliveryFeeCents: number;
-  totalCents: number;
-  createdAt: Date;
-  items: {
-    id: string;
-    quantity: number;
-    unitPriceCents: number;
-    totalPriceCents: number;
-    productNameSnapshot: string;
-    productSlugSnapshot: string;
-    productId: string | null;
-  }[];
-}): OrderSummary {
+// ---------------------------------------------------------------------------
+// Reading
+// ---------------------------------------------------------------------------
+
+function mapOrder(id: string, data: DocumentData): OrderSummary {
+  const rawItems = Array.isArray(data.items) ? data.items : [];
+
   return {
-    ...order,
-    orderLanguage: order.orderLanguage as AppLocale,
-    fulfillmentMethod: order.fulfillmentMethod as FulfillmentMethod,
-    paymentMethod: order.paymentMethod as PaymentMethod,
-    paymentStatus: order.paymentStatus as PaymentStatus,
-    status: order.status as OrderStatus,
+    id,
+    orderNumber: toStringOr(data.orderNumber, id),
+    orderLanguage: toStringOr(data.orderLanguage, "pt") as AppLocale,
+    customerName: toStringOr(data.customerName, ""),
+    customerEmail: toStringOr(data.customerEmail, ""),
+    customerPhone: toStringOr(data.customerPhone, ""),
+    fulfillmentMethod: isFulfillmentMethod(data.fulfillmentMethod)
+      ? data.fulfillmentMethod
+      : FulfillmentMethod.PICKUP,
+    deliveryAddress: toStringOrNull(data.deliveryAddress),
+    deliveryCity: toStringOrNull(data.deliveryCity),
+    deliveryPostalCode: toStringOrNull(data.deliveryPostalCode),
+    pickupNotes: toStringOrNull(data.pickupNotes),
+    requestedDate: toDate(data.requestedDate),
+    notes: toStringOrNull(data.notes),
+    paymentMethod: isPaymentMethod(data.paymentMethod)
+      ? data.paymentMethod
+      : "MBWAY",
+    paymentStatus: isPaymentStatus(data.paymentStatus)
+      ? data.paymentStatus
+      : PaymentStatus.PENDING,
+    status: isOrderStatus(data.status) ? data.status : OrderStatus.PENDING,
+    subtotalCents: toNumberOr(data.subtotalCents, 0),
+    deliveryFeeCents: toNumberOr(data.deliveryFeeCents, 0),
+    totalCents: toNumberOr(data.totalCents, 0),
+    createdAt: requireDate(data.createdAt),
+    items: rawItems.map((item: DocumentData, index: number) => ({
+      // Embedded array entries have no document ID of their own, so one is
+      // synthesised. It is stable for a given order because the array order
+      // never changes after creation.
+      id: `${id}-${index}`,
+      quantity: toNumberOr(item?.quantity, 0),
+      unitPriceCents: toNumberOr(item?.unitPriceCents, 0),
+      totalPriceCents: toNumberOr(item?.totalPriceCents, 0),
+      productNameSnapshot: toStringOr(item?.productNameSnapshot, ""),
+      productSlugSnapshot: toStringOr(item?.productSlugSnapshot, ""),
+      productId: toStringOrNull(item?.productId),
+    })),
   };
+}
+
+export async function getOrderByNumber(
+  orderNumber: string,
+): Promise<OrderSummary | null> {
+  const doc = await getDb()
+    .collection(COLLECTIONS.orders)
+    .doc(orderNumber.trim())
+    .get();
+
+  return doc.exists ? mapOrder(doc.id, doc.data() ?? {}) : null;
+}
+
+/**
+ * Order lookup for the public tracking page.
+ *
+ * Requires the email address used at checkout in addition to the order number.
+ * Order numbers are sequential and therefore guessable, so the email is what
+ * actually prevents someone enumerating references to read other customers'
+ * names, addresses and phone numbers.
+ *
+ * The comparison is case-insensitive because email domains are, and customers
+ * rarely reproduce their own capitalisation. Firestore cannot compare
+ * case-insensitively, which is exactly why `customerEmailLower` is stored
+ * alongside the original at write time.
+ */
+export async function findOrderForTracking({
+  orderNumber,
+  email,
+}: {
+  orderNumber: string;
+  email: string;
+}): Promise<OrderSummary | null> {
+  const doc = await getDb()
+    .collection(COLLECTIONS.orders)
+    .doc(orderNumber.trim().toUpperCase())
+    .get();
+
+  if (!doc.exists) return null;
+
+  const data = doc.data() ?? {};
+  const storedLower =
+    toStringOrNull(data.customerEmailLower) ??
+    toStringOr(data.customerEmail, "").toLocaleLowerCase();
+
+  if (storedLower !== email.trim().toLocaleLowerCase()) return null;
+
+  return mapOrder(doc.id, data);
+}
+
+// ---------------------------------------------------------------------------
+// Writing
+// ---------------------------------------------------------------------------
+
+function formatOrderNumber(date: Date, sequence: number): string {
+  const datePart = [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("");
+
+  return `PD-${datePart}-${String(sequence).padStart(4, "0")}`;
 }
 
 /**
  * Creates an order from a cart.
  *
  * Prices, names and availability are read from the database — the caller
- * supplies only product ids and quantities. This is deliberate: a client
- * cannot influence what it is charged, and the stored line items are a
- * snapshot of what was genuinely on sale at that moment.
+ * supplies only product IDs and quantities, so a client cannot influence what
+ * it is charged, and the stored line items are a snapshot of what was
+ * genuinely on sale at that moment.
  *
- * The whole write runs in one transaction, and stock is decremented with
- * a guarded update so two simultaneous checkouts cannot oversell the last
- * item.
+ * Everything happens in one Firestore transaction, which is what replaces the
+ * two guarantees SQL provided:
+ *
+ *  - **No overselling.** Stock is read inside the transaction and written back
+ *    decremented. Firestore tracks every document read in a transaction and
+ *    aborts the commit if any of them changed in the meantime, retrying the
+ *    whole callback. Two simultaneous checkouts for the last item therefore
+ *    cannot both succeed — the loser re-reads the reduced stock and fails the
+ *    availability check. This is the equivalent of the old guarded
+ *    `UPDATE ... WHERE stock >= n`.
+ *
+ *  - **Unique order numbers.** The daily sequence lives in a counter document
+ *    that is also read inside the transaction, so concurrent orders contend on
+ *    it and are serialised. The order is then written with the number as its
+ *    document ID, and `create` fails if that ID already exists — a second,
+ *    independent guarantee rather than a hope.
+ *
+ * Note the ordering constraint: Firestore requires all reads in a transaction
+ * to precede all writes, so products and counter are read up front and every
+ * mutation is issued afterwards.
  */
 export async function createOrder({
   locale,
@@ -174,7 +264,7 @@ export async function createOrder({
     return { ok: false, error: "payment_not_allowed" };
   }
 
-  // Collapse any duplicate ids so a repeated product becomes one line.
+  // Collapse duplicate IDs so a repeated product becomes one line.
   const quantityByProductId = new Map<string, number>();
   for (const item of items) {
     quantityByProductId.set(
@@ -183,191 +273,160 @@ export async function createOrder({
     );
   }
 
-  const products = await prisma.product.findMany({
-    where: { id: { in: [...quantityByProductId.keys()] }, isActive: true },
-    include: { translations: { where: { locale } } },
-  });
-
-  const productsById = new Map(products.map((product) => [product.id, product]));
-
-  // Anything missing, deactivated, untranslated or short on stock blocks
-  // the order rather than being silently dropped from it.
-  const unavailableProductIds: string[] = [];
-  for (const [productId, quantity] of quantityByProductId) {
-    const product = productsById.get(productId);
-    if (!product || !product.translations[0]) {
-      unavailableProductIds.push(productId);
-      continue;
-    }
-    if (product.stock !== null && product.stock < quantity) {
-      unavailableProductIds.push(productId);
-    }
-  }
-
-  if (unavailableProductIds.length > 0) {
-    return { ok: false, error: "unavailable_items", unavailableProductIds };
-  }
-
-  const lines = [...quantityByProductId].map(([productId, quantity]) => {
-    const product = productsById.get(productId)!;
-    const translation = product.translations[0]!;
-
-    return {
-      productId,
-      quantity,
-      priceCents: product.priceCents,
-      hasFiniteStock: product.stock !== null,
-      productNameSnapshot: translation.name,
-      productSlugSnapshot: translation.slug,
-    };
-  });
-
-  const totals = calculateOrderTotals({
-    lines,
-    fulfillmentMethod: fulfillment.method,
-  });
-
+  const db = getDb();
+  const productIds = [...quantityByProductId.keys()];
   const isDelivery = fulfillment.method === FulfillmentMethod.DELIVERY;
+  const now = new Date();
 
-  // Retry covers the small window in which two checkouts derive the same
-  // daily sequence number before either has committed.
-  const MAX_ATTEMPTS = 5;
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const orderNumber = await nextOrderNumber(new Date());
+  try {
+    const created = await db.runTransaction(async (tx: Transaction) => {
+      // ---- reads (must all precede writes) ----------------------------
+      const productRefs = productIds.map((id) =>
+        db.collection(COLLECTIONS.products).doc(id),
+      );
+      const productDocs = await tx.getAll(...productRefs);
 
-    try {
-      const created = await prisma.$transaction(async (tx) => {
-        for (const line of lines) {
-          if (!line.hasFiniteStock) continue;
+      const counterRef = db
+        .collection(COLLECTIONS.counters)
+        .doc(orderCounterDocId(now));
+      const counterDoc = await tx.get(counterRef);
 
-          // Guarded decrement: the `stock >= quantity` predicate means a
-          // concurrent order that already took the last unit causes this
-          // update to match zero rows, and we abort instead of overselling.
-          const result = await tx.product.updateMany({
-            where: { id: line.productId, stock: { gte: line.quantity } },
-            data: { stock: { decrement: line.quantity } },
-          });
+      // ---- validate ---------------------------------------------------
+      const unavailable: string[] = [];
+      const lines: {
+        productId: string;
+        quantity: number;
+        priceCents: number;
+        hasFiniteStock: boolean;
+        currentStock: number | null;
+        productNameSnapshot: string;
+        productSlugSnapshot: string;
+      }[] = [];
 
-          if (result.count === 0) {
-            throw new OutOfStockError(line.productId);
-          }
+      for (const doc of productDocs) {
+        const productId = doc.id;
+        const quantity = quantityByProductId.get(productId) ?? 0;
+
+        if (!doc.exists) {
+          unavailable.push(productId);
+          continue;
         }
 
-        return tx.order.create({
-          data: {
-            orderNumber,
-            orderLanguage: locale,
-            customerName: customer.name,
-            customerEmail: customer.email,
-            customerPhone: customer.phone,
-            fulfillmentMethod: fulfillment.method,
-            deliveryAddress: isDelivery ? fulfillment.deliveryAddress : null,
-            deliveryCity: isDelivery ? fulfillment.deliveryCity : null,
-            deliveryPostalCode: isDelivery
-              ? fulfillment.deliveryPostalCode
-              : null,
-            pickupNotes: isDelivery ? null : fulfillment.pickupNotes,
-            requestedDate: fulfillment.requestedDate ?? null,
-            notes: fulfillment.notes ?? null,
-            paymentMethod,
-            paymentStatus: PaymentStatus.PENDING,
-            status: OrderStatus.PENDING,
-            subtotalCents: totals.subtotalCents,
-            deliveryFeeCents: totals.deliveryFeeCents,
-            totalCents: totals.totalCents,
-            items: {
-              create: lines.map((line) => ({
-                productId: line.productId,
-                quantity: line.quantity,
-                unitPriceCents: line.priceCents,
-                totalPriceCents: line.priceCents * line.quantity,
-                productNameSnapshot: line.productNameSnapshot,
-                productSlugSnapshot: line.productSlugSnapshot,
-              })),
-            },
-          },
-          include: { items: true },
+        const data = doc.data() ?? {};
+        if (!toBoolean(data.isActive)) {
+          unavailable.push(productId);
+          continue;
+        }
+
+        const stock = toNullableNumber(data.stock);
+        if (stock !== null && stock < quantity) {
+          unavailable.push(productId);
+          continue;
+        }
+
+        const translations = readTranslations<{ name?: string; slug?: string }>(
+          data.translations,
+        );
+        const translation = pickTranslation(translations, locale);
+        if (!translation?.name || !translation?.slug) {
+          // An untranslated product cannot be snapshotted meaningfully in the
+          // customer's language, so it blocks the order rather than being
+          // recorded with a placeholder.
+          unavailable.push(productId);
+          continue;
+        }
+
+        lines.push({
+          productId,
+          quantity,
+          priceCents: toNumberOr(data.priceCents, 0),
+          hasFiniteStock: stock !== null,
+          currentStock: stock,
+          productNameSnapshot: translation.name,
+          productSlugSnapshot: translation.slug,
         });
+      }
+
+      if (unavailable.length > 0) {
+        throw new UnavailableItemsError(unavailable);
+      }
+
+      const totals = calculateOrderTotals({
+        lines,
+        fulfillmentMethod: fulfillment.method,
       });
 
-      return { ok: true, order: toOrderSummary(created) };
-    } catch (error) {
-      if (error instanceof OutOfStockError) {
-        return {
-          ok: false,
-          error: "unavailable_items",
-          unavailableProductIds: [error.productId],
-        };
+      const sequence = toNumberOr(counterDoc.get("seq"), 0) + 1;
+      const orderNumber = formatOrderNumber(now, sequence);
+      const orderRef = db.collection(COLLECTIONS.orders).doc(orderNumber);
+
+      // ---- writes -----------------------------------------------------
+      for (const line of lines) {
+        if (!line.hasFiniteStock || line.currentStock === null) continue;
+        tx.update(db.collection(COLLECTIONS.products).doc(line.productId), {
+          stock: line.currentStock - line.quantity,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
       }
-      if (isUniqueConstraintError(error) && attempt < MAX_ATTEMPTS) {
-        continue;
-      }
-      throw error;
+
+      tx.set(counterRef, { seq: sequence }, { merge: true });
+
+      const orderData = {
+        orderNumber,
+        orderLanguage: locale,
+        customerName: customer.name,
+        customerEmail: customer.email,
+        // Lowercased copy so the tracking page can match case-insensitively.
+        customerEmailLower: customer.email.trim().toLocaleLowerCase(),
+        customerPhone: customer.phone,
+        fulfillmentMethod: fulfillment.method,
+        deliveryAddress: isDelivery ? (fulfillment.deliveryAddress ?? null) : null,
+        deliveryCity: isDelivery ? (fulfillment.deliveryCity ?? null) : null,
+        deliveryPostalCode: isDelivery
+          ? (fulfillment.deliveryPostalCode ?? null)
+          : null,
+        pickupNotes: isDelivery ? null : (fulfillment.pickupNotes ?? null),
+        requestedDate: fulfillment.requestedDate
+          ? Timestamp.fromDate(fulfillment.requestedDate)
+          : null,
+        notes: fulfillment.notes ?? null,
+        paymentMethod,
+        paymentStatus: PaymentStatus.PENDING,
+        status: OrderStatus.PENDING,
+        subtotalCents: totals.subtotalCents,
+        deliveryFeeCents: totals.deliveryFeeCents,
+        totalCents: totals.totalCents,
+        createdAt: Timestamp.fromDate(now),
+        updatedAt: Timestamp.fromDate(now),
+        items: lines.map((line) => ({
+          productId: line.productId,
+          quantity: line.quantity,
+          unitPriceCents: line.priceCents,
+          totalPriceCents: line.priceCents * line.quantity,
+          productNameSnapshot: line.productNameSnapshot,
+          productSlugSnapshot: line.productSlugSnapshot,
+        })),
+      };
+
+      // `create` rather than `set`: if this order number somehow already
+      // exists, fail loudly instead of overwriting a real order.
+      tx.create(orderRef, orderData);
+
+      return { orderNumber, orderData };
+    });
+
+    return {
+      ok: true,
+      order: mapOrder(created.orderNumber, created.orderData),
+    };
+  } catch (error) {
+    if (error instanceof UnavailableItemsError) {
+      return {
+        ok: false,
+        error: "unavailable_items",
+        unavailableProductIds: error.productIds,
+      };
     }
+    throw error;
   }
-
-  // Every attempt lost the order-number race, which in practice means
-  // sustained concurrent checkouts; surfacing it as a server error is
-  // better than inventing a non-sequential reference.
-  throw new Error("Could not allocate a unique order number");
-}
-
-class OutOfStockError extends Error {
-  constructor(public readonly productId: string) {
-    super(`Product ${productId} went out of stock during checkout`);
-    this.name = "OutOfStockError";
-  }
-}
-
-function isUniqueConstraintError(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: unknown }).code === "P2002"
-  );
-}
-
-export async function getOrderByNumber(
-  orderNumber: string,
-): Promise<OrderSummary | null> {
-  const order = await prisma.order.findUnique({
-    where: { orderNumber },
-    include: { items: true },
-  });
-
-  return order ? toOrderSummary(order) : null;
-}
-
-/**
- * Order lookup for the public tracking page.
- *
- * Requires the email address used at checkout in addition to the order
- * number. Order numbers are sequential and therefore guessable, so the
- * email is what actually prevents someone enumerating references to read
- * other customers' names, addresses and phone numbers. The comparison is
- * case-insensitive because email domains are, and customers rarely
- * reproduce their own capitalisation.
- */
-export async function findOrderForTracking({
-  orderNumber,
-  email,
-}: {
-  orderNumber: string;
-  email: string;
-}): Promise<OrderSummary | null> {
-  const order = await prisma.order.findUnique({
-    where: { orderNumber: orderNumber.trim().toUpperCase() },
-    include: { items: true },
-  });
-
-  if (!order) return null;
-  if (
-    order.customerEmail.trim().toLocaleLowerCase() !==
-    email.trim().toLocaleLowerCase()
-  ) {
-    return null;
-  }
-
-  return toOrderSummary(order);
 }

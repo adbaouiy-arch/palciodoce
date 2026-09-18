@@ -12,7 +12,7 @@ import { BUSINESS } from "@/lib/business";
 import {
   FulfillmentMethod,
   PaymentMethod,
-} from "@/generated/prisma/enums";
+} from "@/lib/domain";
 import {
   PAYMENT_METHODS_BY_FULFILLMENT,
   calculateOrderTotals,

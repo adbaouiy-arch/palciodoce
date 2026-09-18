@@ -42,9 +42,15 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-/src/generated/prisma
+# Backups and data exports contain customer PII — never commit them.
+# Includes the pre-Firestore SQLite database, kept here as the original copy.
+/backups
 
-# database
-/prisma/dev.db
-/prisma/dev.db-journal
+# firebase emulator artefacts and local cache
+/.firebase
+*-debug.log
+firestore-debug.log
+ui-debug.log
+firebase-debug.log
+/.dataconnect
 

@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { randomUUID } from "node:crypto";
+import { FieldValue } from "firebase-admin/firestore";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { getDb } from "@/lib/firebase/admin";
+import { COLLECTIONS } from "@/lib/firebase/collections";
 import { routing, type AppLocale } from "@/i18n/routing";
 import { clientKey, rateLimit } from "@/lib/rate-limit";
 
@@ -68,8 +70,13 @@ export async function POST(request: Request) {
       ? existingVisitorId
       : randomUUID();
 
-  await prisma.consentLog.create({
-    data: { visitorId, necessary, analytics, marketing, locale },
+  await getDb().collection(COLLECTIONS.consentLogs).add({
+    visitorId,
+    necessary,
+    analytics,
+    marketing,
+    locale,
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   const response = NextResponse.json({ ok: true }, { status: 201 });

@@ -5,7 +5,7 @@ import { createOrder } from "@/lib/data/orders";
 import {
   FulfillmentMethod,
   PaymentMethod,
-} from "@/generated/prisma/enums";
+} from "@/lib/domain";
 import { clientKey, rateLimit } from "@/lib/rate-limit";
 import {
   ORDER_ACCESS_COOKIE,

@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import clsx from "clsx";
-import { FulfillmentMethod, OrderStatus } from "@/generated/prisma/enums";
+import { FulfillmentMethod, OrderStatus } from "@/lib/domain";
 import {
   ORDER_STATUS_MESSAGE_KEY,
   statusSequenceFor,

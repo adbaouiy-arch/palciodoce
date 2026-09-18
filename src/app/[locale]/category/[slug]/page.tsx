@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { prisma } from "@/lib/prisma";
 import { routing, type AppLocale } from "@/i18n/routing";
 import { getCategories, getCategoryBySlug } from "@/lib/data/categories";
 import { getProducts } from "@/lib/data/products";
@@ -14,23 +13,13 @@ import {
   type AlternateHref,
 } from "@/lib/alternate-links";
 
-/**
- * Resolves the equivalent category slug in every locale, so hreflang
- * alternates and the language switcher point at the same category
- * rather than falling back to the homepage.
- */
-async function getSlugsByLocale(categoryId: string) {
-  const translations = await prisma.categoryTranslation.findMany({
-    where: { categoryId },
-    select: { locale: true, slug: true },
-  });
-
-  const map: Partial<Record<AppLocale, string>> = {};
-  for (const t of translations) {
-    map[t.locale as AppLocale] = t.slug;
-  }
-  return map;
-}
+/*
+  The per-locale slug map used to be a second database query from this page.
+  It now arrives on the category itself as `slugByLocale`, because the whole
+  category — including every translation — is a single Firestore document.
+  That is what keeps hreflang alternates and the language switcher pointing at
+  the same category instead of falling back to the homepage.
+*/
 
 export async function generateMetadata({
   params,
@@ -40,10 +29,10 @@ export async function generateMetadata({
   const { locale: rawLocale, slug } = await params;
   const locale = rawLocale as AppLocale;
 
-  const translation = await getCategoryBySlug(locale, slug);
-  if (!translation) return {};
+  const category = await getCategoryBySlug(locale, slug);
+  if (!category) return {};
 
-  const slugsByLocale = await getSlugsByLocale(translation.categoryId);
+  const slugsByLocale = category.slugByLocale;
   const perLocaleHref: Partial<
     Record<AppLocale, { pathname: "/category/[slug]"; params: { slug: string } }>
   > = {};
@@ -61,8 +50,8 @@ export async function generateMetadata({
     locale,
     href: { pathname: "/category/[slug]", params: { slug } },
     perLocaleHref,
-    title: translation.seoTitle ?? translation.name,
-    description: translation.seoDescription ?? translation.description ?? "",
+    title: category.seoTitle ?? category.name,
+    description: category.seoDescription ?? category.description ?? "",
   });
 }
 
@@ -74,17 +63,17 @@ export default async function CategoryPage({
   const { locale: rawLocale, slug } = await params;
   const locale = rawLocale as AppLocale;
 
-  const translation = await getCategoryBySlug(locale, slug);
-  if (!translation || !translation.category.isActive) {
+  const category = await getCategoryBySlug(locale, slug);
+  if (!category || !category.isActive) {
     notFound();
   }
 
   const t = await getTranslations("Shop");
   const tProduct = await getTranslations("Product");
-  const [categories, products, slugsByLocale] = await Promise.all([
+  const slugsByLocale = category.slugByLocale;
+  const [categories, products] = await Promise.all([
     getCategories(locale),
-    getProducts(locale, { categoryKey: translation.category.key }),
-    getSlugsByLocale(translation.categoryId),
+    getProducts(locale, { categoryKey: category.key }),
   ]);
 
   /*
@@ -107,21 +96,21 @@ export default async function CategoryPage({
       <PublishAlternateLinks links={alternateLinks} />
 
       <Breadcrumbs
-        label={translation.name}
+        label={category.name}
         items={[
           { label: tProduct("breadcrumbHome"), href: "/" },
           { label: tProduct("breadcrumbShop"), href: "/shop" },
-          { label: translation.name },
+          { label: category.name },
         ]}
       />
 
       <header className="mt-6">
         <h1 className="font-heading text-4xl font-semibold text-cocoa">
-          {translation.name}
+          {category.name}
         </h1>
-        {translation.description && (
+        {category.description && (
           <p className="mt-3 max-w-2xl text-lg leading-relaxed text-cocoa-soft">
-            {translation.description}
+            {category.description}
           </p>
         )}
       </header>

@@ -12,9 +12,6 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Prisma-generated client: not hand-written, and already carries its
-    // own @ts-nocheck / lint-disable banners.
-    "src/generated/**",
   ]),
   {
     rules: {

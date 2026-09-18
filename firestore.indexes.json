@@ -1,0 +1,65 @@
+{
+  "//": [
+    "Composite indexes required by the admin queries.",
+    "",
+    "Firestore needs a composite index when a query combines a filter with an",
+    "ordering on a different field, or with an inequality. The emulator does NOT",
+    "enforce this — it serves such queries happily — so a missing entry here",
+    "fails only in production, with 'The query requires an index'.",
+    "",
+    "It does NOT need one for several equality filters together: Firestore",
+    "answers those by intersecting the automatic single-field indexes. This was",
+    "measured against the live project rather than assumed, which is why the two",
+    "`products` entries that used to be listed here are gone — isActive +",
+    "isFeatured and isActive + categoryKey both work without them, and an index",
+    "that earns nothing still costs storage and write latency.",
+    "",
+    "Deploy with: npm run rules:deploy",
+    "",
+    "The storefront catalogue queries deliberately avoid needing indexes: they",
+    "filter on equality only and sort in memory, because the catalogue is small",
+    "and an index that only exists in production is a trap."
+  ],
+  "indexes": [
+    {
+      "//": "listOrders() filtered by status — where status == X, orderBy createdAt desc",
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "//": [
+        "getDashboardStats() revenue — where paymentStatus == PAID and",
+        "status != CANCELLED, aggregating sum(totalCents).",
+        "",
+        "`totalCents` is in the index because it is SUMMED, not filtered. A",
+        "sum() or avg() can only be served by an index that contains the",
+        "aggregated field, and Firestore rejects the query outright otherwise.",
+        "Nothing about the filters hints at this, and the emulator runs the",
+        "query happily either way — it was found by the live project refusing",
+        "it. Removing totalCents here breaks the admin dashboard in production",
+        "only."
+      ],
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "paymentStatus", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "totalCents", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "//": "listContactMessages() — orderBy isHandled asc, createdAt desc",
+      "collectionGroup": "contactMessages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isHandled", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

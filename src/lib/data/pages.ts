@@ -1,12 +1,20 @@
-import { prisma } from "@/lib/prisma";
-import type { AppLocale } from "@/i18n/routing";
-import { routing } from "@/i18n/routing";
+import { getDb } from "@/lib/firebase/admin";
+import { COLLECTIONS } from "@/lib/firebase/collections";
+import {
+  pickTranslation,
+  readTranslations,
+  requireDate,
+  toStringOr,
+} from "@/lib/firebase/mappers";
+import { routing, type AppLocale } from "@/i18n/routing";
 
 /**
- * Informational pages (privacy policy, terms, cookie policy) are stored
- * in the database rather than hard-coded, so their wording can be
- * updated per language from the admin area without a deploy — which
- * matters most for legal copy.
+ * Informational pages (privacy policy, terms, cookie policy).
+ *
+ * Stored in the database rather than hard-coded so legal wording can be
+ * updated per language without a deploy. The page key is the document ID,
+ * which both gives the uniqueness the old `@unique` constraint provided and
+ * makes every lookup a single keyed read.
  */
 
 /** Page keys that have a corresponding route in the app. */
@@ -22,42 +30,51 @@ export type PageContent = {
   updatedAt: Date;
 };
 
+type PageTranslation = {
+  title?: string;
+  content?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+};
+
 export async function getPage(
   locale: AppLocale,
   key: PageKey,
 ): Promise<PageContent | null> {
-  const page = await prisma.page.findUnique({
-    where: { key },
-    include: { translations: { where: { locale } } },
-  });
+  const doc = await getDb().collection(COLLECTIONS.pages).doc(key).get();
+  if (!doc.exists) return null;
 
-  const translation = page?.translations[0];
-  if (!page || !translation) return null;
+  const data = doc.data() ?? {};
+  const translations = readTranslations<PageTranslation>(data.translations);
+  const translation = pickTranslation(translations, locale);
+  if (!translation) return null;
+
+  const title = toStringOr(translation.title, key);
 
   return {
-    key: page.key,
-    title: translation.title,
-    content: translation.content,
-    // Legal pages don't always carry bespoke SEO copy; the page title is
-    // a sensible, non-empty fallback.
-    seoTitle: translation.seoTitle ?? translation.title,
-    seoDescription: translation.seoDescription ?? translation.title,
-    updatedAt: page.updatedAt,
+    key: doc.id,
+    title,
+    content: toStringOr(translation.content, ""),
+    // Legal pages don't always carry bespoke SEO copy; the title is a
+    // sensible, non-empty fallback.
+    seoTitle: toStringOr(translation.seoTitle, title),
+    seoDescription: toStringOr(translation.seoDescription, title),
+    updatedAt: requireDate(data.updatedAt),
   };
 }
 
 /**
- * The locales a given page has been translated into. Used by the sitemap
- * so we never advertise an hreflang alternate for a page that has no
- * content in that language.
+ * The locales a given page has been translated into. Used by the sitemap so we
+ * never advertise an hreflang alternate for a page with no content in that
+ * language.
  */
 export async function getPageLocales(key: PageKey): Promise<AppLocale[]> {
-  const page = await prisma.page.findUnique({
-    where: { key },
-    include: { translations: { select: { locale: true } } },
-  });
-  if (!page) return [];
+  const doc = await getDb().collection(COLLECTIONS.pages).doc(key).get();
+  if (!doc.exists) return [];
 
-  const available = new Set(page.translations.map((t) => t.locale as string));
-  return routing.locales.filter((locale) => available.has(locale));
+  const translations = readTranslations<PageTranslation>(doc.get("translations"));
+  return routing.locales.filter((locale) => {
+    const translation = translations[locale];
+    return Boolean(translation?.title && translation?.content);
+  });
 }

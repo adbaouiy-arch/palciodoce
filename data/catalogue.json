@@ -1,0 +1,693 @@
+{
+  "format": "palaciodoce/firestore/v1",
+  "description": "Catalogue and informational-page content, kept under version control so the site is reproducible from a clean Firebase project and so legal copy is reviewable in a diff. Load with: npm run db:seed. Contains no personal data.",
+  "collections": {
+    "categories": {
+      "cmu4iaq7k00001f4m2k16lms4": {
+        "createdAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-16T19:41:18.512Z"
+        },
+        "translations": {
+          "ar": {
+            "seoDescription": "اكتشفوا الحلويات الحرفية من Palácio Doce في براغا. تارتات وحلويات تقليدية وإبداعات خاصة، تُحضَّر طازجة يومياً.",
+            "name": "الحلويات",
+            "description": "حلويات تقليدية وأخرى من إبداعنا الخاص، تُحضَّر طازجة كل يوم في متجرنا في براغا.",
+            "seoTitle": "حلويات حرفية في براغا",
+            "slug": "sweets"
+          },
+          "pt": {
+            "seoDescription": "Descubra os doces artesanais do Palácio Doce em Braga. Tarteletes, doces tradicionais e criações de autor, feitos frescos todos os dias.",
+            "name": "Doces",
+            "description": "Doces tradicionais e de autor, preparados diariamente na nossa pastelaria em Braga.",
+            "seoTitle": "Doces Artesanais em Braga",
+            "slug": "doces"
+          },
+          "en": {
+            "seoDescription": "Discover Palácio Doce's artisan sweets in Braga. Tartlets, traditional treats and signature creations, made fresh daily.",
+            "name": "Sweets",
+            "description": "Traditional and signature sweets, prepared fresh every day at our pastry shop in Braga.",
+            "seoTitle": "Artisan Sweets in Braga",
+            "slug": "sweets"
+          }
+        },
+        "position": 1,
+        "isActive": true,
+        "key": "sweets",
+        "updatedAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-18T16:56:54.897Z"
+        }
+      },
+      "cmu4iaq8100041f4mox9771p9": {
+        "createdAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-16T19:41:18.529Z"
+        },
+        "translations": {
+          "ar": {
+            "seoDescription": "اطلبوا الكيك والتشيز كيك الحرفي في براغا. مثالي لأعياد الميلاد والمناسبات، مع التوصيل إلى المنزل أو الاستلام من المتجر.",
+            "name": "الكيك",
+            "description": "كيك وتشيز كيك لأعياد الميلاد والمناسبات، أو ببساطة لإضفاء الحلاوة على يومكم.",
+            "seoTitle": "كيك وتشيز كيك في براغا",
+            "slug": "cakes"
+          },
+          "pt": {
+            "seoDescription": "Encomende bolos artesanais e cheesecakes em Braga. Ideais para aniversários e celebrações, com entrega ao domicílio ou recolha em loja.",
+            "name": "Bolos",
+            "description": "Bolos e cheesecakes para aniversários, celebrações ou simplesmente para adoçar o dia.",
+            "seoTitle": "Bolos e Cheesecakes em Braga",
+            "slug": "bolos"
+          },
+          "en": {
+            "seoDescription": "Order artisan cakes and cheesecakes in Braga. Perfect for birthdays and celebrations, with home delivery or in-store pickup.",
+            "name": "Cakes",
+            "description": "Cakes and cheesecakes for birthdays, celebrations, or simply to sweeten the day.",
+            "seoTitle": "Cakes & Cheesecakes in Braga",
+            "slug": "cakes"
+          }
+        },
+        "position": 2,
+        "isActive": true,
+        "key": "cakes",
+        "updatedAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-18T16:56:54.912Z"
+        }
+      },
+      "cmu4iaq8500081f4m2y2ez1zj": {
+        "createdAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-16T19:41:18.533Z"
+        },
+        "translations": {
+          "ar": {
+            "seoDescription": "حلويات حرفية في أكواب، جاهزة للتقديم. اطلبوا حلويات Palácio Doce في براغا مع خدمة التوصيل أو الاستلام.",
+            "name": "الحلويات المميزة",
+            "description": "حلويات فردية في أكواب، كريمية وجاهزة للتقديم.",
+            "seoTitle": "حلويات فردية مميزة في براغا",
+            "slug": "desserts"
+          },
+          "pt": {
+            "seoDescription": "Sobremesas artesanais em copo, prontas a servir. Encomende as sobremesas do Palácio Doce em Braga com entrega ou recolha.",
+            "name": "Sobremesas",
+            "description": "Sobremesas individuais em copo, cremosas e prontas a servir.",
+            "seoTitle": "Sobremesas Individuais em Braga",
+            "slug": "sobremesas"
+          },
+          "en": {
+            "seoDescription": "Artisan dessert cups, ready to serve. Order Palácio Doce desserts in Braga with delivery or pickup.",
+            "name": "Desserts",
+            "description": "Individual dessert cups, creamy and ready to serve.",
+            "seoTitle": "Individual Desserts in Braga",
+            "slug": "desserts"
+          }
+        },
+        "position": 3,
+        "isActive": true,
+        "key": "desserts",
+        "updatedAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-18T16:56:54.917Z"
+        }
+      },
+      "cmu4iaq89000c1f4m819nrtut": {
+        "createdAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-16T19:41:18.537Z"
+        },
+        "translations": {
+          "ar": {
+            "seoDescription": "علب تذوّق وهدايا حلويات في براغا. أهدوا تشكيلة من Palácio Doce، مع التوصيل إلى المنزل أو الاستلام من المتجر.",
+            "name": "علب الهدايا",
+            "description": "علب تذوّق ومجموعات هدايا، جاهزة للإهداء.",
+            "seoTitle": "علب هدايا الحلويات في براغا",
+            "slug": "gift-boxes"
+          },
+          "pt": {
+            "seoDescription": "Caixas de degustação e presentes doces em Braga. Ofereça uma seleção do Palácio Doce, com entrega ao domicílio ou recolha em loja.",
+            "name": "Caixas & Presentes",
+            "description": "Caixas de degustação e conjuntos para presente, prontos a oferecer.",
+            "seoTitle": "Caixas de Doces e Presentes em Braga",
+            "slug": "caixas-e-presentes"
+          },
+          "en": {
+            "seoDescription": "Tasting boxes and sweet gifts in Braga. Give a selection from Palácio Doce, with home delivery or in-store pickup.",
+            "name": "Gift Boxes",
+            "description": "Tasting boxes and gift sets, ready to give.",
+            "seoTitle": "Sweet Gift Boxes in Braga",
+            "slug": "gift-boxes"
+          }
+        },
+        "position": 4,
+        "isActive": true,
+        "key": "gift-boxes",
+        "updatedAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-18T16:56:54.921Z"
+        }
+      }
+    },
+    "categorySlugs": {
+      "ar_cakes": {
+        "locale": "ar",
+        "categoryId": "cmu4iaq8100041f4mox9771p9",
+        "slug": "cakes"
+      },
+      "ar_desserts": {
+        "locale": "ar",
+        "categoryId": "cmu4iaq8500081f4m2y2ez1zj",
+        "slug": "desserts"
+      },
+      "ar_gift-boxes": {
+        "locale": "ar",
+        "categoryId": "cmu4iaq89000c1f4m819nrtut",
+        "slug": "gift-boxes"
+      },
+      "ar_sweets": {
+        "locale": "ar",
+        "categoryId": "cmu4iaq7k00001f4m2k16lms4",
+        "slug": "sweets"
+      },
+      "en_cakes": {
+        "locale": "en",
+        "categoryId": "cmu4iaq8100041f4mox9771p9",
+        "slug": "cakes"
+      },
+      "en_desserts": {
+        "locale": "en",
+        "categoryId": "cmu4iaq8500081f4m2y2ez1zj",
+        "slug": "desserts"
+      },
+      "en_gift-boxes": {
+        "locale": "en",
+        "categoryId": "cmu4iaq89000c1f4m819nrtut",
+        "slug": "gift-boxes"
+      },
+      "en_sweets": {
+        "locale": "en",
+        "categoryId": "cmu4iaq7k00001f4m2k16lms4",
+        "slug": "sweets"
+      },
+      "pt_bolos": {
+        "locale": "pt",
+        "categoryId": "cmu4iaq8100041f4mox9771p9",
+        "slug": "bolos"
+      },
+      "pt_caixas-e-presentes": {
+        "locale": "pt",
+        "categoryId": "cmu4iaq89000c1f4m819nrtut",
+        "slug": "caixas-e-presentes"
+      },
+      "pt_doces": {
+        "locale": "pt",
+        "categoryId": "cmu4iaq7k00001f4m2k16lms4",
+        "slug": "doces"
+      },
+      "pt_sobremesas": {
+        "locale": "pt",
+        "categoryId": "cmu4iaq8500081f4m2y2ez1zj",
+        "slug": "sobremesas"
+      }
+    },
+    "products": {
+      "cmu4iaq8f000g1f4mk052p8sk": {
+        "images": [
+          {
+            "url": "/images/products/strawberry-cheesecake.webp",
+            "alt": "Cheesecake de frutos vermelhos com cobertura brilhante e morangos frescos",
+            "position": 0
+          }
+        ],
+        "categoryKey": "cakes",
+        "isActive": true,
+        "weightGrams": 1200,
+        "createdAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-16T19:41:18.543Z"
+        },
+        "translations": {
+          "ar": {
+            "seoDescription": "تشيز كيك التوت الأحمر الحرفي، مصنوع في براغا. قاعدة بسكويت وحشوة كريمية حريرية وصلصة توت أحمر. اطلبوه مع التوصيل أو الاستلام.",
+            "name": "تشيز كيك التوت الأحمر",
+            "description": "تشيز كيك التوت الأحمر هو أحد أكثر إبداعات Palácio Doce طلباً. قاعدة بسكويت مقرمشة تحمل حشوة من الجبن الكريمي الحريرية وقليلة الحلاوة، تُزيَّن بطبقة لامعة من صلصة التوت الأحمر والفراولة الطازجة المقطّعة يدوياً. نقدّمه بارداً تماماً، ما يبرز التباين بين حموضة الفواكه ونعومة الكريمة. مثالي لأعياد الميلاد والعشاء العائلي، أو ببساطة لإنهاء وجبتكم بلمسة مميزة. متوفر عند الطلب، مع خدمة التوصيل داخل براغا أو الاستلام من متجرنا.",
+            "ingredients": "جبن كريمي، كريمة، سكر، بيض، بسكويت (دقيق قمح، سكر، زيت نباتي)، زبدة، توت أحمر (فراولة، توت العليق)، جيلاتين، عصير ليمون، نشا الذرة.",
+            "shortDescription": "تشيز كيك كريمي على قاعدة بسكويت، مغطى بصلصة التوت الأحمر والفراولة الطازجة.",
+            "seoTitle": "تشيز كيك التوت الأحمر | اطلبوه في براغا",
+            "storageInformation": "يُحفظ في الثلاجة بين ٢ و٥ درجات مئوية. يُفضّل تناوله خلال ٤٨ ساعة من الاستلام. أخرجوه من الثلاجة ١٠ دقائق قبل التقديم.",
+            "slug": "red-berry-cheesecake",
+            "allergens": "يحتوي على الحليب والبيض والغلوتين (القمح) والصويا. قد يحتوي على آثار من المكسرات."
+          },
+          "pt": {
+            "seoDescription": "Cheesecake artesanal de frutos vermelhos, feito em Braga. Base de bolacha, creme sedoso e geleia de frutos vermelhos. Encomende com entrega ou recolha.",
+            "name": "Cheesecake de Frutos Vermelhos",
+            "description": "O nosso cheesecake de frutos vermelhos é uma das criações mais pedidas do Palácio Doce. Uma base crocante de bolacha suporta um recheio de queijo creme sedoso e pouco doce, finalizado com uma camada brilhante de geleia de frutos vermelhos e morangos frescos cortados à mão. Servimo-lo bem frio, o que realça o contraste entre a acidez da fruta e a suavidade do creme. Ideal para aniversários, jantares em família ou simplesmente para terminar uma refeição em grande. Disponível por encomenda, com entrega em Braga ou recolha na nossa loja.",
+            "ingredients": "Queijo creme, nata, açúcar, ovos, bolacha (farinha de trigo, açúcar, óleo vegetal), manteiga, frutos vermelhos (morango, framboesa), gelatina, sumo de limão, amido de milho.",
+            "shortDescription": "Cheesecake cremoso sobre base de bolacha, coberto com geleia de frutos vermelhos e morangos frescos.",
+            "seoTitle": "Cheesecake de Frutos Vermelhos | Encomendar em Braga",
+            "storageInformation": "Conservar no frigorífico entre 2 °C e 5 °C. Consumir preferencialmente nas 48 horas seguintes à entrega. Retirar do frio 10 minutos antes de servir.",
+            "slug": "cheesecake-frutos-vermelhos",
+            "allergens": "Contém leite, ovos, glúten (trigo) e soja. Pode conter vestígios de frutos de casca rija."
+          },
+          "en": {
+            "seoDescription": "Artisan red berry cheesecake, made in Braga. Biscuit base, silky cream filling and red berry glaze. Order with delivery or pickup.",
+            "name": "Red Berry Cheesecake",
+            "description": "Our red berry cheesecake is one of Palácio Doce's most requested creations. A crisp biscuit base supports a silky, gently sweet cream cheese filling, finished with a glossy layer of red berry glaze and hand-cut fresh strawberries. We serve it well chilled, which brings out the contrast between the fruit's brightness and the smoothness of the cream. Perfect for birthdays, family dinners, or simply to end a meal on a high note. Available to order, with delivery in Braga or pickup at our shop.",
+            "ingredients": "Cream cheese, cream, sugar, eggs, biscuit (wheat flour, sugar, vegetable oil), butter, red berries (strawberry, raspberry), gelatine, lemon juice, cornstarch.",
+            "shortDescription": "Creamy cheesecake on a biscuit base, topped with red berry glaze and fresh strawberries.",
+            "seoTitle": "Red Berry Cheesecake | Order in Braga",
+            "storageInformation": "Keep refrigerated between 2 °C and 5 °C. Best enjoyed within 48 hours of delivery. Remove from the fridge 10 minutes before serving.",
+            "slug": "red-berry-cheesecake",
+            "allergens": "Contains milk, eggs, gluten (wheat) and soy. May contain traces of nuts."
+          }
+        },
+        "priceCents": 2450,
+        "position": 1,
+        "isFeatured": true,
+        "sku": "PD-CHK-001",
+        "stock": null,
+        "categoryId": "cmu4iaq8100041f4mox9771p9",
+        "updatedAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-18T16:56:54.928Z"
+        }
+      },
+      "cmu4iaq8r000l1f4mlaghfpkx": {
+        "images": [
+          {
+            "url": "/images/products/almond-tarts.webp",
+            "alt": "Tarteletes de amêndoa laminada caramelizada dispostas num prato dourado",
+            "position": 0
+          }
+        ],
+        "categoryKey": "sweets",
+        "isActive": true,
+        "weightGrams": 480,
+        "createdAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-16T19:41:18.555Z"
+        },
+        "translations": {
+          "ar": {
+            "seoDescription": "تارتات اللوز الحرفية، مصنوعة في براغا. عجينة مقرمشة بالزبدة ورقائق لوز مكرملة. علبة من ٨ قطع، مع التوصيل أو الاستلام.",
+            "name": "تارتات اللوز",
+            "description": "طبق كلاسيكي من الحلويات البرتغالية، مُحضَّر كما يجب أن يكون. عجينة مقرمشة غنية بالزبدة، تُخبز حتى تصبح ذهبية اللون، ثم تُحشى بكريمة اللوز الناعمة وتُغطى برقائق اللوز المكرملة التي تُطقطق برفق عند أول قضمة. تُحضَّر بكميات صغيرة على مدار اليوم، ما يحافظ على طزاجتها وقوامها المقرمش. مثالية مع فنجان قهوة، أو لاستقبال الضيوف في المنزل، أو لأخذها كذكرى من براغا. علبة من ٨ قطع.",
+            "ingredients": "دقيق قمح، زبدة، رقائق لوز، سكر، بيض، كريمة، عسل، ملح.",
+            "shortDescription": "تشكيلة من تارتات العجين المقرمش مع رقائق اللوز المكرملة. تُقدَّم في علبة من ٨ قطع.",
+            "seoTitle": "تارتات اللوز | حلويات حرفية في براغا",
+            "storageInformation": "يُحفظ في مكان بارد وجاف داخل وعاء محكم الإغلاق لمدة تصل إلى ٤ أيام. لا يُحفظ في الثلاجة، للحفاظ على قرمشة العجين.",
+            "slug": "almond-tartlets",
+            "allergens": "يحتوي على الغلوتين (القمح) والحليب والبيض والمكسرات (اللوز)."
+          },
+          "pt": {
+            "seoDescription": "Tarteletes de amêndoa artesanais, feitas em Braga. Massa quebrada amanteigada e amêndoa laminada caramelizada. Caixa de 8, com entrega ou recolha.",
+            "name": "Tarteletes de Amêndoa",
+            "description": "Um clássico da pastelaria portuguesa, feito como deve ser. Massa quebrada amanteigada, cozida até ficar dourada e crocante, preenchida com um creme de amêndoa suave e coberta com amêndoa laminada caramelizada que estala levemente ao primeiro contacto. São preparadas em pequenos lotes ao longo do dia, o que garante frescura e uma textura que se mantém. Perfeitas para acompanhar um café, para receber visitas em casa ou para levar como lembrança de Braga. Caixa de 8 unidades.",
+            "ingredients": "Farinha de trigo, manteiga, amêndoa laminada, açúcar, ovos, nata, mel, sal.",
+            "shortDescription": "Conjunto de tarteletes de massa quebrada com amêndoa laminada caramelizada. Vendidas em caixa de 8.",
+            "seoTitle": "Tarteletes de Amêndoa | Doces Artesanais em Braga",
+            "storageInformation": "Conservar em local fresco e seco, em recipiente fechado, até 4 dias. Não refrigerar, para preservar a textura crocante da massa.",
+            "slug": "tarteletes-de-amendoa",
+            "allergens": "Contém glúten (trigo), leite, ovos e frutos de casca rija (amêndoa)."
+          },
+          "en": {
+            "seoDescription": "Artisan almond tartlets, made in Braga. Buttery shortcrust pastry and caramelised flaked almonds. Box of 8, with delivery or pickup.",
+            "name": "Almond Tartlets",
+            "description": "A Portuguese pastry classic, made the way it should be. Buttery shortcrust pastry, baked until golden and crisp, filled with a smooth almond cream and topped with caramelised flaked almonds that crackle gently at first bite. They're prepared in small batches throughout the day, which keeps them fresh and preserves a texture that holds. Perfect alongside a coffee, for having guests over, or to take home as a memento of Braga. Box of 8.",
+            "ingredients": "Wheat flour, butter, flaked almonds, sugar, eggs, cream, honey, salt.",
+            "shortDescription": "A set of shortcrust tartlets with caramelised flaked almonds. Sold in a box of 8.",
+            "seoTitle": "Almond Tartlets | Artisan Sweets in Braga",
+            "storageInformation": "Store in a cool, dry place in a sealed container for up to 4 days. Do not refrigerate, to preserve the pastry's crispness.",
+            "slug": "almond-tartlets",
+            "allergens": "Contains gluten (wheat), milk, eggs and nuts (almond)."
+          }
+        },
+        "priceCents": 1650,
+        "position": 2,
+        "isFeatured": true,
+        "sku": "PD-TRT-002",
+        "stock": null,
+        "categoryId": "cmu4iaq7k00001f4m2k16lms4",
+        "updatedAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-18T16:56:54.943Z"
+        }
+      },
+      "cmu4iaq8w000q1f4m5yplt4sa": {
+        "images": [
+          {
+            "url": "/images/products/lotus-biscoff-trifle.webp",
+            "alt": "Copo de sobremesa com creme e bolacha Lotus caramelizada",
+            "position": 0
+          }
+        ],
+        "categoryKey": "desserts",
+        "isActive": true,
+        "weightGrams": 180,
+        "createdAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-16T19:41:18.560Z"
+        },
+        "translations": {
+          "ar": {
+            "seoDescription": "حلوى فردية في كوب بكريمة البسكويت المكرمل، مصنوعة في براغا. اطلبوها من Palácio Doce مع التوصيل أو الاستلام.",
+            "name": "كوب البسكويت المكرمل",
+            "description": "طبقات متعاقبة من البسكويت المكرمل المفروم وكريمة مخملية بلمسات من القرفة والكراميل، تُزيَّن بطبقة ناعمة من معجون البسكويت وقطعة بسكويت كاملة في الأعلى. حلوى مريحة تُقدَّم في الكوب نفسه الذي حُضِّرت فيه، جاهزة للتناول بالملعقة. من أكثر الأصناف المفضّلة لزوّار متجرنا في براغا، خاصة في وقت العصر مع فنجان قهوة. تُبَاع بشكل فردي.",
+            "ingredients": "بسكويت مكرمل (دقيق قمح، سكر، زيت نباتي، قرفة)، جبن ماسكربوني، كريمة، حليب مكثّف، سكر، جيلاتين.",
+            "shortDescription": "حلوى فردية في كوب، بكريمة البسكويت المكرمل وطبقات من البسكويت المفروم.",
+            "seoTitle": "كوب البسكويت المكرمل | حلويات مميزة في براغا",
+            "storageInformation": "يُحفظ في الثلاجة بين ٢ و٥ درجات مئوية ويُستهلك خلال ٤٨ ساعة. يُقدَّم بارداً.",
+            "slug": "caramelised-biscuit-cup",
+            "allergens": "يحتوي على الغلوتين (القمح) والحليب والصويا. قد يحتوي على آثار من المكسرات."
+          },
+          "pt": {
+            "seoDescription": "Sobremesa individual em copo com creme de bolacha caramelizada, feita em Braga. Encomende no Palácio Doce com entrega ou recolha.",
+            "name": "Copo de Bolacha Caramelizada",
+            "description": "Camadas alternadas de bolacha caramelizada esmigalhada e um creme aveludado com notas de canela e caramelo, terminadas com uma cobertura lisa de pasta de bolacha e uma bolacha inteira no topo. É uma sobremesa reconfortante, servida no copo em que é montada, pronta a comer com colher. Um dos favoritos de quem visita a nossa loja em Braga, especialmente ao fim da tarde com um café. Vendido individualmente.",
+            "ingredients": "Bolacha caramelizada (farinha de trigo, açúcar, óleo vegetal, canela), queijo mascarpone, nata, leite condensado, açúcar, gelatina.",
+            "shortDescription": "Sobremesa individual em copo, com creme de bolacha caramelizada e camadas de bolacha esmigalhada.",
+            "seoTitle": "Copo de Bolacha Caramelizada | Sobremesas em Braga",
+            "storageInformation": "Conservar no frigorífico entre 2 °C e 5 °C e consumir nas 48 horas seguintes. Servir frio.",
+            "slug": "copo-bolacha-caramelizada",
+            "allergens": "Contém glúten (trigo), leite e soja. Pode conter vestígios de frutos de casca rija."
+          },
+          "en": {
+            "seoDescription": "Individual dessert cup with caramelised biscuit cream, made in Braga. Order from Palácio Doce with delivery or pickup.",
+            "name": "Caramelised Biscuit Cup",
+            "description": "Alternating layers of crushed caramelised biscuit and a velvety cream with notes of cinnamon and caramel, finished with a smooth biscuit-spread topping and a whole biscuit on top. It's a comforting dessert, served in the cup it's assembled in and ready to eat with a spoon. A favourite among visitors to our shop in Braga, especially late afternoon with a coffee. Sold individually.",
+            "ingredients": "Caramelised biscuit (wheat flour, sugar, vegetable oil, cinnamon), mascarpone cheese, cream, condensed milk, sugar, gelatine.",
+            "shortDescription": "An individual dessert cup with caramelised biscuit cream and layers of crushed biscuit.",
+            "seoTitle": "Caramelised Biscuit Cup | Desserts in Braga",
+            "storageInformation": "Keep refrigerated between 2 °C and 5 °C and consume within 48 hours. Serve chilled.",
+            "slug": "caramelised-biscuit-cup",
+            "allergens": "Contains gluten (wheat), milk and soy. May contain traces of nuts."
+          }
+        },
+        "priceCents": 550,
+        "position": 3,
+        "isFeatured": true,
+        "sku": "PD-DES-003",
+        "categoryId": "cmu4iaq8500081f4m2y2ez1zj",
+        "updatedAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-18T18:29:08.292Z"
+        },
+        "stock": null
+      },
+      "cmu4iaq92000v1f4mebyzhtxi": {
+        "images": [
+          {
+            "url": "/images/products/oreo-matcha-trifle.webp",
+            "alt": "Copo de sobremesa de matcha com bolacha de cacau esmigalhada",
+            "position": 0
+          }
+        ],
+        "categoryKey": "desserts",
+        "isActive": true,
+        "weightGrams": 180,
+        "createdAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-16T19:41:18.566Z"
+        },
+        "translations": {
+          "ar": {
+            "seoDescription": "حلوى ماتشا فردية مع بسكويت الكاكاو، مصنوعة في براغا. اطلبوها من Palácio Doce مع التوصيل إلى المنزل أو الاستلام.",
+            "name": "كوب الماتشا وبسكويت الكاكاو",
+            "description": "حلوى لمن يفضّلون المذاق الأقل حلاوة. تُحضَّر كريمة الماتشا من مسحوق الشاي الأخضر عالي الجودة، ما يمنحها لونها الزاهي ولمسة عشبية مميزة توازن حلاوة السكر. تتعاقب مع طبقات سخية من بسكويت الكاكاو المفروم، لتخلق تبايناً في اللون والقوام لا يقل جمالاً عن مذاقه. تُحضَّر وتُقدَّم في الكوب، جاهزة للتناول. تُبَاع بشكل فردي.",
+            "ingredients": "جبن ماسكربوني، كريمة، حليب، سكر، مسحوق شاي الماتشا الأخضر، بسكويت كاكاو (دقيق قمح، سكر، كاكاو، زيت نباتي)، جيلاتين.",
+            "shortDescription": "كريمة ماتشا ناعمة بطبقات مع بسكويت الكاكاو المفروم. حلوى فردية في كوب.",
+            "seoTitle": "كوب الماتشا وبسكويت الكاكاو | حلويات في براغا",
+            "storageInformation": "يُحفظ في الثلاجة بين ٢ و٥ درجات مئوية ويُستهلك خلال ٤٨ ساعة. يُقدَّم بارداً.",
+            "slug": "matcha-cocoa-biscuit-cup",
+            "allergens": "يحتوي على الغلوتين (القمح) والحليب والصويا. قد يحتوي على آثار من المكسرات."
+          },
+          "pt": {
+            "seoDescription": "Sobremesa individual de matcha com bolacha de cacau, feita em Braga. Encomende no Palácio Doce com entrega ao domicílio ou recolha.",
+            "name": "Copo de Matcha e Bolacha de Cacau",
+            "description": "Uma sobremesa para quem gosta de sabores menos doces. O creme de matcha é preparado com chá verde em pó de qualidade, o que lhe dá a cor viva e um travo herbáceo característico que equilibra o açúcar. Alterna com camadas generosas de bolacha de cacau esmigalhada, criando um contraste de cor e textura tão bonito quanto saboroso. Montada e servida no copo, pronta a comer. Vendido individualmente.",
+            "ingredients": "Queijo mascarpone, nata, leite, açúcar, chá verde matcha em pó, bolacha de cacau (farinha de trigo, açúcar, cacau, óleo vegetal), gelatina.",
+            "shortDescription": "Creme de matcha suave em camadas com bolacha de cacau esmigalhada. Sobremesa individual em copo.",
+            "seoTitle": "Copo de Matcha e Bolacha de Cacau | Sobremesas Braga",
+            "storageInformation": "Conservar no frigorífico entre 2 °C e 5 °C e consumir nas 48 horas seguintes. Servir frio.",
+            "slug": "copo-matcha-bolacha-cacau",
+            "allergens": "Contém glúten (trigo), leite e soja. Pode conter vestígios de frutos de casca rija."
+          },
+          "en": {
+            "seoDescription": "Individual matcha dessert with cocoa biscuit, made in Braga. Order from Palácio Doce with home delivery or pickup.",
+            "name": "Matcha & Cocoa Biscuit Cup",
+            "description": "A dessert for those who prefer less sweetness. The matcha cream is made with quality powdered green tea, giving it that vivid colour and a characteristic herbaceous edge that balances the sugar. It alternates with generous layers of crushed cocoa biscuit, creating a contrast of colour and texture that's as striking as it is good to eat. Assembled and served in the cup, ready to enjoy. Sold individually.",
+            "ingredients": "Mascarpone cheese, cream, milk, sugar, matcha green tea powder, cocoa biscuit (wheat flour, sugar, cocoa, vegetable oil), gelatine.",
+            "shortDescription": "Smooth matcha cream layered with crushed cocoa biscuit. An individual dessert cup.",
+            "seoTitle": "Matcha & Cocoa Biscuit Cup | Desserts in Braga",
+            "storageInformation": "Keep refrigerated between 2 °C and 5 °C and consume within 48 hours. Serve chilled.",
+            "slug": "matcha-cocoa-biscuit-cup",
+            "allergens": "Contains gluten (wheat), milk and soy. May contain traces of nuts."
+          }
+        },
+        "priceCents": 550,
+        "position": 4,
+        "isFeatured": false,
+        "sku": "PD-DES-004",
+        "stock": null,
+        "categoryId": "cmu4iaq8500081f4m2y2ez1zj",
+        "updatedAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-18T16:56:54.961Z"
+        }
+      },
+      "cmu4iaq9700101f4mbd2rr1er": {
+        "images": [
+          {
+            "url": "/images/products/mixed-trifles.webp",
+            "alt": "Seleção de copos de sobremesa variados numa travessa de pedra",
+            "position": 0
+          }
+        ],
+        "categoryKey": "gift-boxes",
+        "isActive": true,
+        "weightGrams": 900,
+        "createdAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-16T19:41:18.571Z"
+        },
+        "translations": {
+          "ar": {
+            "seoDescription": "علبة تذوّق تضم خمس حلويات فردية من Palácio Doce، في براغا. مثالية كهدية، مع التوصيل إلى المنزل أو الاستلام من المتجر.",
+            "name": "علبة تذوّق Palácio Doce",
+            "description": "أفضل طريقة للتعرّف على Palácio Doce، أو لإهداء شيء يُرضي الجميع. تجمع العلبة خمساً من حلوياتنا الفردية في أكواب، في تشكيلة تضم أكثر النكهات طلباً — منها الماتشا مع بسكويت الكاكاو والبسكويت المكرمل. كل كوب مُغلَّف بشكل منفصل، وتُقدَّم العلبة جاهزة للإهداء، ما يجعلها عملية لأخذها إلى عشاء، أو للاحتفال بمناسبة، أو ببساطة للاستمتاع بها في المنزل. قد تختلف المكوّنات الدقيقة قليلاً حسب إنتاج اليوم؛ أخبرونا بتفضيلاتكم في ملاحظات الطلب وسنبذل ما في وسعنا لتحقيقها.",
+            "ingredients": "يرجى مراجعة قائمة مكونات كل حلوى مُدرَجة. القاعدة المشتركة: جبن ماسكربوني، كريمة، حليب، سكر، بسكويت (دقيق قمح، سكر، زيت نباتي)، جيلاتين.",
+            "shortDescription": "خمس حلويات فردية في تشكيلة متنوعة، جاهزة للإهداء أو للمشاركة.",
+            "seoTitle": "علبة تذوّق الحلويات | هدايا في براغا",
+            "storageInformation": "تُحفظ في الثلاجة بين ٢ و٥ درجات مئوية وتُستهلك خلال ٤٨ ساعة من الاستلام. تُقدَّم باردة.",
+            "slug": "tasting-box",
+            "allergens": "يحتوي على الغلوتين (القمح) والحليب والصويا. قد يحتوي على المكسرات والبيض، حسب التشكيلة المُدرَجة."
+          },
+          "pt": {
+            "seoDescription": "Caixa de degustação com cinco sobremesas individuais do Palácio Doce, em Braga. Ideal para presente, com entrega ao domicílio ou recolha em loja.",
+            "name": "Caixa Degustação Palácio Doce",
+            "description": "A melhor forma de conhecer o Palácio Doce, ou de oferecer algo que agrada a todos. A caixa reúne cinco das nossas sobremesas individuais em copo, numa seleção que combina os sabores mais pedidos — matcha com bolacha de cacau e bolacha caramelizada entre eles. Cada copo vem selado individualmente e a caixa é apresentada pronta a entregar, o que a torna prática para levar a um jantar, marcar uma data ou simplesmente ter em casa. A composição exata pode variar ligeiramente conforme a produção do dia; indique-nos preferências nas notas da encomenda e faremos o possível para as respeitar.",
+            "ingredients": "Consultar a lista de ingredientes de cada sobremesa incluída. Base comum: queijo mascarpone, nata, leite, açúcar, bolacha (farinha de trigo, açúcar, óleo vegetal), gelatina.",
+            "shortDescription": "Cinco sobremesas individuais numa seleção variada, prontas a oferecer ou a partilhar.",
+            "seoTitle": "Caixa Degustação de Doces | Presentes em Braga",
+            "storageInformation": "Conservar no frigorífico entre 2 °C e 5 °C e consumir nas 48 horas seguintes à entrega. Servir frio.",
+            "slug": "caixa-degustacao",
+            "allergens": "Contém glúten (trigo), leite e soja. Pode conter frutos de casca rija e ovos, conforme a seleção incluída."
+          },
+          "en": {
+            "seoDescription": "A tasting box with five individual Palácio Doce desserts, in Braga. Ideal as a gift, with home delivery or in-store pickup.",
+            "name": "Palácio Doce Tasting Box",
+            "description": "The best way to get to know Palácio Doce, or to give something that pleases everyone. The box brings together five of our individual dessert cups in a selection combining our most requested flavours — matcha with cocoa biscuit and caramelised biscuit among them. Each cup is sealed individually and the box arrives presented and ready to hand over, which makes it practical for taking to a dinner, marking an occasion, or simply keeping at home. The exact composition may vary slightly according to the day's production; let us know your preferences in the order notes and we'll do our best to accommodate them.",
+            "ingredients": "Please refer to the ingredient list of each dessert included. Common base: mascarpone cheese, cream, milk, sugar, biscuit (wheat flour, sugar, vegetable oil), gelatine.",
+            "shortDescription": "Five individual desserts in a varied selection, ready to give or to share.",
+            "seoTitle": "Sweet Tasting Box | Gifts in Braga",
+            "storageInformation": "Keep refrigerated between 2 °C and 5 °C and consume within 48 hours of delivery. Serve chilled.",
+            "slug": "tasting-box",
+            "allergens": "Contains gluten (wheat), milk and soy. May contain nuts and eggs, depending on the selection included."
+          }
+        },
+        "priceCents": 2600,
+        "position": 5,
+        "isFeatured": true,
+        "sku": "PD-BOX-005",
+        "stock": null,
+        "categoryId": "cmu4iaq89000c1f4m819nrtut",
+        "updatedAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-18T16:56:54.967Z"
+        }
+      }
+    },
+    "productSlugs": {
+      "ar_almond-tartlets": {
+        "productId": "cmu4iaq8r000l1f4mlaghfpkx",
+        "locale": "ar",
+        "slug": "almond-tartlets"
+      },
+      "ar_caramelised-biscuit-cup": {
+        "productId": "cmu4iaq8w000q1f4m5yplt4sa",
+        "locale": "ar",
+        "slug": "caramelised-biscuit-cup"
+      },
+      "ar_matcha-cocoa-biscuit-cup": {
+        "productId": "cmu4iaq92000v1f4mebyzhtxi",
+        "locale": "ar",
+        "slug": "matcha-cocoa-biscuit-cup"
+      },
+      "ar_red-berry-cheesecake": {
+        "productId": "cmu4iaq8f000g1f4mk052p8sk",
+        "locale": "ar",
+        "slug": "red-berry-cheesecake"
+      },
+      "ar_tasting-box": {
+        "productId": "cmu4iaq9700101f4mbd2rr1er",
+        "locale": "ar",
+        "slug": "tasting-box"
+      },
+      "en_almond-tartlets": {
+        "productId": "cmu4iaq8r000l1f4mlaghfpkx",
+        "locale": "en",
+        "slug": "almond-tartlets"
+      },
+      "en_caramelised-biscuit-cup": {
+        "productId": "cmu4iaq8w000q1f4m5yplt4sa",
+        "locale": "en",
+        "slug": "caramelised-biscuit-cup"
+      },
+      "en_matcha-cocoa-biscuit-cup": {
+        "productId": "cmu4iaq92000v1f4mebyzhtxi",
+        "locale": "en",
+        "slug": "matcha-cocoa-biscuit-cup"
+      },
+      "en_red-berry-cheesecake": {
+        "productId": "cmu4iaq8f000g1f4mk052p8sk",
+        "locale": "en",
+        "slug": "red-berry-cheesecake"
+      },
+      "en_tasting-box": {
+        "productId": "cmu4iaq9700101f4mbd2rr1er",
+        "locale": "en",
+        "slug": "tasting-box"
+      },
+      "pt_caixa-degustacao": {
+        "productId": "cmu4iaq9700101f4mbd2rr1er",
+        "locale": "pt",
+        "slug": "caixa-degustacao"
+      },
+      "pt_cheesecake-frutos-vermelhos": {
+        "productId": "cmu4iaq8f000g1f4mk052p8sk",
+        "locale": "pt",
+        "slug": "cheesecake-frutos-vermelhos"
+      },
+      "pt_copo-bolacha-caramelizada": {
+        "productId": "cmu4iaq8w000q1f4m5yplt4sa",
+        "locale": "pt",
+        "slug": "copo-bolacha-caramelizada"
+      },
+      "pt_copo-matcha-bolacha-cacau": {
+        "productId": "cmu4iaq92000v1f4mebyzhtxi",
+        "locale": "pt",
+        "slug": "copo-matcha-bolacha-cacau"
+      },
+      "pt_tarteletes-de-amendoa": {
+        "productId": "cmu4iaq8r000l1f4mlaghfpkx",
+        "locale": "pt",
+        "slug": "tarteletes-de-amendoa"
+      }
+    },
+    "pages": {
+      "cookies": {
+        "createdAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-16T19:41:18.593Z"
+        },
+        "translations": {
+          "ar": {
+            "seoDescription": "ملفات تعريف الارتباط التي يستخدمها Palácio Doce، والغرض منها، وكيف يمكنكم تغيير تفضيلاتكم.",
+            "seoTitle": "سياسة ملفات تعريف الارتباط",
+            "title": "سياسة ملفات تعريف الارتباط",
+            "content": "## ما هي ملفات تعريف الارتباط\n\nملفات تعريف الارتباط هي ملفات نصية صغيرة تُخزَّن على جهازكم عند زيارة أي موقع. تتيح للموقع العمل بشكل صحيح، وعند إذنكم بذلك، جمع معلومات عن طريقة استخدامه.\n\n## ملفات تعريف الارتباط الأساسية\n\nهذه الملفات ضرورية لعمل الموقع ولا يمكن إيقاف تشغيلها:\n\n- **اللغة المختارة:** تحفظ اللغة التي اخترتموها (Português أو English أو العربية)، لتجدوها في زيارتكم القادمة.\n- **سلة التسوق:** تحفظ المنتجات التي أضفتموها، حتى لا تفقدوها أثناء التصفّح.\n- **الموافقة على ملفات تعريف الارتباط:** تحفظ تفضيلاتكم، لتجنّب سؤالكم مرة أخرى في كل صفحة.\n\n## ملفات تعريف الارتباط الاختيارية\n\nتُستخدَم فقط في حال منحكم موافقتكم:\n\n- **التحليلات:** تساعدنا على معرفة الصفحات الأكثر زيارة، لتحسين الموقع.\n- **التسويق:** تتيح لنا تقديم محتوى وعروض أكثر ملاءمة لكم.\n\n## كيفية تغيير تفضيلاتكم\n\nيمكنكم قبول الفئات الاختيارية أو رفضها أو تخصيصها من خلال الإشعار الذي يظهر عند زيارتكم الأولى. يمكنكم أيضاً حذف ملفات تعريف الارتباط في أي وقت من إعدادات المتصفّح؛ مع الإشارة إلى أن حذف الملفات الأساسية سيؤدي إلى نسيان الموقع للغة التي اخترتموها ولمحتويات سلتكم."
+          },
+          "pt": {
+            "seoDescription": "Que cookies o Palácio Doce utiliza, para que servem e como pode alterar as suas preferências.",
+            "seoTitle": "Política de Cookies",
+            "title": "Política de Cookies",
+            "content": "## O que são cookies\n\nCookies são pequenos ficheiros de texto guardados no seu dispositivo quando visita um site. Servem para que o site funcione corretamente e, quando o autoriza, para recolher informação sobre a utilização.\n\n## Cookies essenciais\n\nEstes cookies são necessários para o funcionamento do site e não podem ser desativados:\n\n- **Idioma selecionado:** guarda a língua que escolheu (Português, English ou العربية), para que a encontre na próxima visita.\n- **Carrinho de compras:** guarda os produtos que adicionou, para que não os perca ao navegar.\n- **Consentimento de cookies:** guarda as suas preferências de cookies, para não lhe voltarmos a perguntar em cada página.\n\n## Cookies opcionais\n\nSó são utilizados se der o seu consentimento:\n\n- **Análise:** ajudam-nos a compreender que páginas são mais visitadas, para melhorarmos o site.\n- **Marketing:** permitem-nos apresentar conteúdo e ofertas mais relevantes.\n\n## Como alterar as suas preferências\n\nPode aceitar, rejeitar ou personalizar as categorias opcionais no aviso apresentado na primeira visita. Pode também apagar os cookies em qualquer momento nas definições do seu navegador; note que apagar os cookies essenciais faz com que o site esqueça o idioma escolhido e o conteúdo do carrinho."
+          },
+          "en": {
+            "seoDescription": "Which cookies Palácio Doce uses, what they are for, and how you can change your preferences.",
+            "seoTitle": "Cookie Policy",
+            "title": "Cookie Policy",
+            "content": "## What cookies are\n\nCookies are small text files stored on your device when you visit a website. They allow the site to work correctly and, where you allow it, to collect information about how it is used.\n\n## Essential cookies\n\nThese cookies are necessary for the site to function and cannot be disabled:\n\n- **Selected language:** stores the language you chose (Português, English or العربية), so it's there on your next visit.\n- **Shopping cart:** stores the products you added, so you don't lose them while browsing.\n- **Cookie consent:** stores your cookie preferences, so we don't ask again on every page.\n\n## Optional cookies\n\nThese are only used if you give your consent:\n\n- **Analytics:** help us understand which pages are visited most, so we can improve the site.\n- **Marketing:** allow us to show more relevant content and offers.\n\n## How to change your preferences\n\nYou can accept, reject or customise the optional categories in the notice shown on your first visit. You can also delete cookies at any time in your browser settings; note that deleting the essential cookies will make the site forget your chosen language and cart contents."
+          }
+        },
+        "key": "cookies",
+        "updatedAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-16T19:41:18.593Z"
+        }
+      },
+      "privacy": {
+        "createdAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-16T19:41:18.583Z"
+        },
+        "translations": {
+          "ar": {
+            "seoDescription": "كيف يجمع Palácio Doce بياناتكم الشخصية ويستخدمها ويحميها، وفقاً لللائحة العامة لحماية البيانات (GDPR).",
+            "seoTitle": "سياسة الخصوصية",
+            "title": "سياسة الخصوصية",
+            "content": "## من نحن\n\nPalácio Doce، الكائن في R. de Santa Margarida 13, 4710-311 Braga, Portugal، هو المسؤول عن معالجة البيانات الشخصية التي تُجمَع من خلال هذا الموقع.\n\n## البيانات التي نجمعها\n\nنجمع فقط البيانات اللازمة لمعالجة طلباتكم والرد على استفساراتكم:\n\n- **بيانات الهوية والتواصل:** الاسم والبريد الإلكتروني ورقم الهاتف.\n- **بيانات التوصيل:** العنوان والمدينة والرمز البريدي، عند اختياركم التوصيل إلى المنزل.\n- **بيانات الطلب:** المنتجات والكميات والمبالغ وطريقة الدفع والتاريخ المطلوب وأي ملاحظات تقدّمونها.\n- **اللغة المفضّلة:** تُحفظ لنعرض لكم الموقع باللغة التي اخترتموها.\n\nلا نجمع بيانات بطاقات الدفع على هذا الموقع.\n\n## أغراض استخدام بياناتكم\n\n- معالجة طلباتكم وتحضيرها وتوصيلها.\n- التواصل معكم بشأن حالة طلبكم.\n- الوفاء بالالتزامات القانونية والضريبية.\n\nالأساس القانوني للمعالجة هو تنفيذ عقد البيع، وفيما يتعلق بالالتزامات الضريبية، الامتثال لالتزام قانوني.\n\n## مدة الاحتفاظ بالبيانات\n\nنحتفظ ببيانات الطلبات للمدة التي يقتضيها القانون الضريبي البرتغالي. تُحذف البيانات غير اللازمة لهذا الغرض عندما تنتهي الحاجة إليها.\n\n## الجهات التي نشارك معها البيانات\n\nنشارك البيانات فقط مع الجهات الضرورية لتقديم الخدمة. لا نبيع بياناتكم ولا نمنحها لأطراف ثالثة لأغراض تسويقية.\n\n- **خدمة التوصيل:** الاسم والعنوان ورقم الهاتف، عند اختياركم التوصيل إلى المنزل.\n- **Google Ireland Limited:** تُخزَّن بيانات هذا الموقع — الطلبات والرسائل وسجلات الموافقة — في Firebase (Firestore)، ويُصادَق الدخول إلى منطقة الإدارة عبر Firebase Authentication. تعمل Google كمعالج للبيانات، ولا تعالجها إلا وفق تعليماتنا وبموجب شروط معالجة البيانات الخاصة بـ Google.\n- **الجهات العامة:** عند وجود التزام قانوني بالإبلاغ، وبخاصة إلى الهيئة الضريبية البرتغالية.\n\n## مكان حفظ بياناتكم\n\nتُستضاف قاعدة بيانات هذا الموقع في منطقة تابعة للاتحاد الأوروبي. وإذا احتاجت Google إلى وصول للدعم من خارج المنطقة الاقتصادية الأوروبية، فإن ذلك الوصول مشمول بالشروط التعاقدية النموذجية المعتمدة من المفوضية الأوروبية.\n## حقوقكم\n\nلكم الحق في الوصول إلى بياناتكم الشخصية وتصحيحها ومحوها وتقييد معالجتها ونقلها والاعتراض عليها. لممارسة أي من هذه الحقوق، تواصلوا معنا على الرقم ‎+351 929 311 701‎ أو شخصياً في متجرنا.\n\nكما يحق لكم تقديم شكوى إلى الهيئة الوطنية لحماية البيانات في البرتغال (CNPD).\n\n## ملفات تعريف الارتباط\n\nنستخدم ملفات تعريف ارتباط أساسية لتشغيل الموقع، وملفات اختيارية بموافقتكم. راجعوا سياسة ملفات تعريف الارتباط لمزيد من التفاصيل ولتغيير تفضيلاتكم."
+          },
+          "pt": {
+            "seoDescription": "Como o Palácio Doce recolhe, utiliza e protege os seus dados pessoais, em conformidade com o RGPD.",
+            "seoTitle": "Política de Privacidade",
+            "title": "Política de Privacidade",
+            "content": "## Quem somos\n\nO Palácio Doce, com estabelecimento em R. de Santa Margarida 13, 4710-311 Braga, Portugal, é responsável pelo tratamento dos dados pessoais recolhidos através deste site.\n\n## Que dados recolhemos\n\nRecolhemos apenas os dados necessários para processar as suas encomendas e responder aos seus pedidos:\n\n- **Dados de identificação e contacto:** nome, email e telefone.\n- **Dados de entrega:** endereço, localidade e código postal, quando escolhe entrega ao domicílio.\n- **Dados da encomenda:** produtos, quantidades, valores, método de pagamento, data pretendida e notas que nos indique.\n- **Idioma preferido:** guardado para lhe apresentar o site no idioma que escolheu.\n\nNão recolhemos dados de cartões de pagamento neste site.\n\n## Para que utilizamos os seus dados\n\n- Processar, preparar e entregar as suas encomendas.\n- Comunicar consigo sobre o estado da sua encomenda.\n- Cumprir obrigações legais e fiscais.\n\nA base legal para o tratamento é a execução do contrato de compra e venda e, quanto às obrigações fiscais, o cumprimento de obrigação legal.\n\n## Durante quanto tempo conservamos os dados\n\nConservamos os dados das encomendas durante o período exigido pela legislação fiscal portuguesa. Os dados que não sejam necessários para esse fim são eliminados quando deixam de ser precisos.\n\n## Com quem partilhamos os dados\n\nPartilhamos dados apenas com quem é estritamente necessário para lhe prestar o serviço. Não vendemos nem cedemos os seus dados para fins de marketing de terceiros.\n\n- **Serviço de entrega:** nome, endereço e telefone, quando escolhe entrega ao domicílio.\n- **Google Ireland Limited:** os dados deste site — encomendas, mensagens e registos de consentimento — são armazenados no Firebase (Firestore), e o acesso à área de gestão é autenticado pelo Firebase Authentication. A Google actua como subcontratante, tratando os dados apenas segundo as nossas instruções e ao abrigo dos termos de tratamento de dados da Google.\n- **Autoridades públicas:** quando exista obrigação legal de comunicar, designadamente à Autoridade Tributária.\n\n## Onde ficam os seus dados\n\nA base de dados deste site está alojada numa região da União Europeia. Caso a Google necessite de acesso de suporte a partir de fora do Espaço Económico Europeu, esse acesso está coberto pelas cláusulas contratuais-tipo aprovadas pela Comissão Europeia.\n## Os seus direitos\n\nTem o direito de acesso, retificação, apagamento, limitação do tratamento, portabilidade e oposição relativamente aos seus dados pessoais. Para exercer qualquer destes direitos, contacte-nos através do telefone +351 929 311 701 ou presencialmente na nossa loja.\n\nTem também o direito de apresentar reclamação à Comissão Nacional de Proteção de Dados (CNPD).\n\n## Cookies\n\nUtilizamos cookies essenciais ao funcionamento do site e, com o seu consentimento, cookies opcionais. Consulte a nossa Política de Cookies para mais detalhes e para alterar as suas preferências."
+          },
+          "en": {
+            "seoDescription": "How Palácio Doce collects, uses and protects your personal data, in compliance with the GDPR.",
+            "seoTitle": "Privacy Policy",
+            "title": "Privacy Policy",
+            "content": "## Who we are\n\nPalácio Doce, located at R. de Santa Margarida 13, 4710-311 Braga, Portugal, is the controller responsible for the personal data collected through this website.\n\n## What data we collect\n\nWe collect only the data needed to process your orders and respond to your requests:\n\n- **Identification and contact data:** name, email and phone number.\n- **Delivery data:** address, city and postal code, when you choose home delivery.\n- **Order data:** products, quantities, amounts, payment method, requested date and any notes you provide.\n- **Preferred language:** stored so we can show you the site in the language you chose.\n\nWe do not collect payment card data on this website.\n\n## What we use your data for\n\n- Processing, preparing and delivering your orders.\n- Communicating with you about the status of your order.\n- Meeting legal and tax obligations.\n\nThe legal basis for processing is the performance of the sales contract and, for tax obligations, compliance with a legal obligation.\n\n## How long we keep data\n\nWe keep order data for the period required by Portuguese tax law. Data not needed for that purpose is deleted once it is no longer required.\n\n## Who we share data with\n\nWe share data only with those strictly necessary to provide the service. We do not sell or pass on your data for third-party marketing purposes.\n\n- **Delivery service:** name, address and phone number, when you choose home delivery.\n- **Google Ireland Limited:** this site's data — orders, messages and consent records — is stored in Firebase (Firestore), and access to the management area is authenticated by Firebase Authentication. Google acts as a processor, handling the data only on our instructions and under Google's data processing terms.\n- **Public authorities:** where we are legally required to report, in particular to the Portuguese tax authority.\n\n## Where your data is held\n\nThis site's database is hosted in a European Union region. Where Google requires support access from outside the European Economic Area, that access is covered by the standard contractual clauses approved by the European Commission.\n## Your rights\n\nYou have the right of access, rectification, erasure, restriction of processing, portability and objection regarding your personal data. To exercise any of these rights, contact us on +351 929 311 701 or in person at our shop.\n\nYou also have the right to lodge a complaint with the Portuguese Data Protection Authority (CNPD).\n\n## Cookies\n\nWe use cookies that are essential to the site's operation and, with your consent, optional cookies. See our Cookie Policy for details and to change your preferences."
+          }
+        },
+        "key": "privacy",
+        "updatedAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-18T19:10:38.576045Z"
+        }
+      },
+      "terms": {
+        "createdAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-16T19:41:18.589Z"
+        },
+        "translations": {
+          "ar": {
+            "seoDescription": "شروط البيع والطلب والتوصيل والدفع المطبَّقة على عمليات الشراء من Palácio Doce.",
+            "seoTitle": "الشروط والأحكام",
+            "title": "الشروط والأحكام",
+            "content": "## نطاق التطبيق\n\nتنظّم هذه الشروط عملية شراء منتجات الحلويات من خلال موقع palaciodoce.pt، الذي يديره Palácio Doce، الكائن في R. de Santa Margarida 13, 4710-311 Braga, Portugal.\n\n## الطلبات\n\nتُعتمَد الطلبات بعد تقديمها عبر الموقع. نحتفظ بالحق في التواصل مع العميل لتأكيد التفاصيل أو التوفّر أو التاريخ المطلوب.\n\nيُحضَّر جزء كبير من منتجاتنا عند الطلب. لذلك نرجو تقديم الطلبات مسبقاً بأكبر قدر ممكن، خاصة بالنسبة للكيك وعلب الهدايا.\n\n## الأسعار والدفع\n\nجميع الأسعار معروضة باليورو (€) وتشمل ضريبة القيمة المضافة بالنسبة القانونية المطبَّقة. نقبل الدفع عبر MB WAY والحوالة المصرفية والدفع نقداً عند الاستلام أو التوصيل.\n\nيُحضَّر الطلب بعد تأكيد الدفع، إلا في حال اختيار الدفع نقداً عند التوصيل أو الاستلام.\n\n## التوصيل والاستلام\n\nنوفّر التوصيل داخل منطقة براغا. تُحسب رسوم التوصيل عند إتمام الطلب. الاستلام من المتجر لا يترتب عليه أي تكلفة إضافية.\n\nنرجو تأكيد جهوزيتكم لاستلام الطلب في التاريخ والعنوان المحدَّدين. في حال عدم تواجدكم، سنتواصل معكم لإعادة الجدولة؛ وقد لا تكون المنتجات القابلة للتلف مؤهَّلة لمحاولة توصيل ثانية.\n\n## حق التراجع\n\nبموجب القانون البرتغالي المطبَّق، لا ينطبق حق التراجع على المواد الغذائية القابلة للتلف، وهو ما يشمل معظم منتجات Palácio Doce.\n\nإذا وصل أي منتج بحالة لا تطابق ما طُلب، تواصلوا معنا خلال ٢٤ ساعة لنعالج الأمر.\n\n## مسببات الحساسية\n\nمعلومات مسببات الحساسية مذكورة على كل منتج. تُحضَّر منتجاتنا في مطبخ يُتعامَل فيه مع الغلوتين والحليب والبيض والمكسرات، لذا لا يمكننا ضمان الغياب التام لأي آثار منها.\n\n## للتواصل\n\nلأي استفسار يتعلق بهذه الشروط: ‎+351 929 311 701‎."
+          },
+          "pt": {
+            "seoDescription": "Condições de venda, encomenda, entrega e pagamento aplicáveis às compras no Palácio Doce.",
+            "seoTitle": "Termos e Condições",
+            "title": "Termos e Condições",
+            "content": "## Objeto\n\nEstes termos regulam a compra de produtos de pastelaria através do site palaciodoce.pt, explorado pelo Palácio Doce, com estabelecimento em R. de Santa Margarida 13, 4710-311 Braga.\n\n## Encomendas\n\nAs encomendas são confirmadas depois de submetidas através do site. Reservamo-nos o direito de contactar o cliente para confirmar detalhes, disponibilidade ou a data pretendida.\n\nUma parte significativa dos nossos produtos é preparada por encomenda. Por esse motivo, pedimos que as encomendas sejam feitas com a antecedência possível, especialmente para bolos e caixas.\n\n## Preços e pagamento\n\nTodos os preços são apresentados em euros (€) e incluem IVA à taxa legal aplicável. Aceitamos MB WAY, transferência bancária e pagamento em dinheiro na recolha ou na entrega.\n\nA encomenda é preparada após confirmação do pagamento, exceto quando o pagamento em dinheiro na entrega ou na recolha for a opção escolhida.\n\n## Entrega e recolha\n\nEfetuamos entregas na área de Braga. A taxa de entrega é calculada no momento da finalização da compra. A recolha em loja não tem custos adicionais.\n\nPedimos que confirme a disponibilidade para receber a encomenda na data e morada indicadas. Em caso de ausência, entraremos em contacto para reagendar; produtos perecíveis podem não ser passíveis de nova entrega.\n\n## Direito de livre resolução\n\nNos termos da legislação portuguesa aplicável, o direito de livre resolução não se aplica a bens alimentares perecíveis, o que inclui a generalidade dos produtos do Palácio Doce.\n\nSe um produto for entregue em condições que não correspondam ao encomendado, contacte-nos no prazo de 24 horas para que possamos resolver a situação.\n\n## Alergénios\n\nA informação sobre alergénios está indicada em cada produto. Os nossos produtos são preparados numa cozinha onde se manipulam glúten, leite, ovos e frutos de casca rija, pelo que não podemos garantir a ausência total de vestígios.\n\n## Contactos\n\nPara qualquer questão relativa a estes termos: +351 929 311 701."
+          },
+          "en": {
+            "seoDescription": "Conditions of sale, ordering, delivery and payment applicable to purchases from Palácio Doce.",
+            "seoTitle": "Terms & Conditions",
+            "title": "Terms & Conditions",
+            "content": "## Scope\n\nThese terms govern the purchase of pastry products through palaciodoce.pt, operated by Palácio Doce, located at R. de Santa Margarida 13, 4710-311 Braga, Portugal.\n\n## Orders\n\nOrders are confirmed after being submitted through the website. We reserve the right to contact the customer to confirm details, availability or the requested date.\n\nA significant portion of our products is made to order. For that reason, we ask that orders be placed as far in advance as possible, particularly for cakes and boxes.\n\n## Prices and payment\n\nAll prices are shown in euros (€) and include VAT at the applicable legal rate. We accept MB WAY, bank transfer and cash payment on pickup or delivery.\n\nOrders are prepared after payment is confirmed, except where cash on delivery or on pickup is the chosen option.\n\n## Delivery and pickup\n\nWe deliver within the Braga area. The delivery fee is calculated at checkout. In-store pickup carries no additional cost.\n\nPlease confirm your availability to receive the order at the date and address given. If you are not there, we will contact you to reschedule; perishable products may not be eligible for a second delivery attempt.\n\n## Right of withdrawal\n\nUnder applicable Portuguese law, the right of withdrawal does not apply to perishable food goods, which covers most Palácio Doce products.\n\nIf a product is delivered in a condition that does not match what was ordered, contact us within 24 hours so we can put it right.\n\n## Allergens\n\nAllergen information is stated on each product. Our products are prepared in a kitchen where gluten, milk, eggs and nuts are handled, so we cannot guarantee the complete absence of traces.\n\n## Contact\n\nFor any question regarding these terms: +351 929 311 701."
+          }
+        },
+        "key": "terms",
+        "updatedAt": {
+          "__type__": "timestamp",
+          "value": "2026-09-16T19:41:18.589Z"
+        }
+      }
+    }
+  }
+}

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-auth";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { listOrders } from "@/lib/data/admin";
-import { OrderStatus } from "@/generated/prisma/enums";
+import { OrderStatus } from "@/lib/domain";
 import { formatPrice } from "@/lib/format-price";
 import { formatDateTime } from "@/lib/format-date";
 import {

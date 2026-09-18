@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import type { AppLocale } from "@/i18n/routing";
 import type { OrderSummary } from "@/lib/data/orders";
-import { FulfillmentMethod } from "@/generated/prisma/enums";
+import { FulfillmentMethod } from "@/lib/domain";
 import { formatPrice } from "@/lib/format-price";
 import { formatDate } from "@/lib/format-date";
 import {

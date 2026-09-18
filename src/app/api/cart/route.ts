@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { getProductsForCart } from "@/lib/data/products";
 import { routing, type AppLocale } from "@/i18n/routing";
 
 const bodySchema = z.object({
@@ -37,35 +37,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ lines: [] });
   }
 
-  const products = await prisma.product.findMany({
-    where: { id: { in: items.map((item) => item.productId) } },
-    include: {
-      images: { orderBy: { position: "asc" }, take: 1 },
-      translations: { where: { locale } },
-    },
-  });
-
-  const productsById = new Map(products.map((product) => [product.id, product]));
+  const productsById = await getProductsForCart(
+    locale,
+    items.map((item) => item.productId),
+  );
 
   const lines = items
     .map((item) => {
       const product = productsById.get(item.productId);
       if (!product) return null;
-      const translation = product.translations[0];
-      if (!translation) return null;
 
       const isAvailable =
-        product.isActive && (product.stock === null || product.stock >= item.quantity);
+        product.isActive &&
+        (product.stock === null || product.stock >= item.quantity);
 
       return {
         productId: product.id,
-        slug: translation.slug,
-        name: translation.name,
+        slug: product.slug,
+        name: product.name,
         priceCents: product.priceCents,
         quantity: item.quantity,
-        image: product.images[0]
-          ? { url: product.images[0].url, alt: product.images[0].alt ?? translation.name }
-          : null,
+        image: product.image,
         isActive: product.isActive,
         stock: product.stock,
         isAvailable,

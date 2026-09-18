@@ -1,5 +1,5 @@
 import { BUSINESS } from "@/lib/business";
-import { FulfillmentMethod, PaymentMethod } from "@/generated/prisma/enums";
+import { FulfillmentMethod, PaymentMethod } from "@/lib/domain";
 
 /**
  * The single source of truth for order money maths.

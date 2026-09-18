@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { FieldValue } from "firebase-admin/firestore";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { getDb } from "@/lib/firebase/admin";
+import { COLLECTIONS } from "@/lib/firebase/collections";
 import { routing, type AppLocale } from "@/i18n/routing";
 import { clientKey, rateLimit } from "@/lib/rate-limit";
 
@@ -49,8 +51,18 @@ export async function POST(request: Request) {
 
   const { locale, name, email, message } = parsed.data;
 
-  await prisma.contactMessage.create({
-    data: { locale, name, email, message },
+  await getDb().collection(COLLECTIONS.contactMessages).add({
+    locale,
+    name,
+    email,
+    // Stored lowercase alongside the original so the admin area can search by
+    // address — Firestore has no case-insensitive comparison.
+    emailLower: email.toLocaleLowerCase(),
+    message,
+    isHandled: false,
+    // Server timestamp, so the record does not depend on the clock of whatever
+    // instance happened to serve the request.
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   return NextResponse.json({ ok: true }, { status: 201 });

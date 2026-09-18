@@ -9,7 +9,7 @@ import {
   updateOrderStatus,
   updatePaymentStatus,
 } from "@/lib/data/admin";
-import { OrderStatus, PaymentStatus } from "@/generated/prisma/enums";
+import { OrderStatus, PaymentStatus } from "@/lib/domain";
 
 /**
  * Mutating admin actions.
