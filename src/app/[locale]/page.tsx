@@ -8,7 +8,11 @@ import { getCategories } from "@/lib/data/categories";
 import { getFeaturedProducts, getProducts } from "@/lib/data/products";
 import { ProductCard } from "@/components/product/product-card";
 import { buildPageMetadata } from "@/lib/seo";
-import { BUSINESS, BUSINESS_ADDRESS_ONE_LINE } from "@/lib/business";
+import {
+  BUSINESS,
+  BUSINESS_ADDRESS_ONE_LINE,
+  SOCIAL_PROFILES,
+} from "@/lib/business";
 import { LocalBusinessJsonLd } from "@/components/seo/json-ld";
 
 export async function generateMetadata({
@@ -280,27 +284,35 @@ export default async function HomePage({
         </div>
       </section>
 
-      {/* ------------------------------------------------------------ Instagram */}
+      {/* --------------------------------------------------------- Social feeds */}
       {galleryImages.length > 0 && (
         <section
-          aria-labelledby="home-instagram-title"
+          aria-labelledby="home-social-title"
           className="pd-reveal mx-auto max-w-6xl px-4 py-16 text-center sm:px-6"
         >
           <h2
-            id="home-instagram-title"
+            id="home-social-title"
             className="font-heading text-3xl font-semibold text-cocoa"
           >
-            {t("instagramTitle")}
+            {t("socialTitle")}
           </h2>
-          <a
-            href={BUSINESS.instagramUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            dir="ltr"
-            className="mt-3 inline-block text-lg font-medium text-gold-deep underline underline-offset-4 transition-colors hover:text-cocoa focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
-          >
-            {t("instagramHandle")}
-          </a>
+
+          <ul className="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+            {SOCIAL_PROFILES.map((profile) => (
+              <li key={profile.name}>
+                <a
+                  href={profile.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  dir="ltr"
+                  className="inline-block text-lg font-medium text-gold-deep underline underline-offset-4 transition-colors hover:text-cocoa focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                >
+                  {profile.name}{" "}
+                  <span className="text-cocoa-soft">{profile.handle}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
 
           <ul className="mt-9 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {galleryImages.map((image, index) => (

@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { getPathname } from "@/i18n/navigation";
 import type { AppLocale } from "@/i18n/routing";
-import { BUSINESS } from "@/lib/business";
+import { BUSINESS, SOCIAL_PROFILE_URLS } from "@/lib/business";
 import { absoluteUrl } from "@/lib/seo";
 import type { ProductDetail } from "@/lib/data/products";
 
@@ -49,7 +49,9 @@ export async function LocalBusinessJsonLd({ locale }: { locale: AppLocale }) {
           latitude: BUSINESS.latitude,
           longitude: BUSINESS.longitude,
         },
-        sameAs: [BUSINESS.instagramUrl],
+        // Links every social profile to this business entity, which is how
+        // search engines confirm the accounts and the shop are the same thing.
+        sameAs: SOCIAL_PROFILE_URLS,
         areaServed: {
           "@type": "City",
           name: BUSINESS.city,

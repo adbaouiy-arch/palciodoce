@@ -2,7 +2,7 @@ import { getTranslations, getLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getCategories } from "@/lib/data/categories";
 import type { AppLocale } from "@/i18n/routing";
-import { BUSINESS } from "@/lib/business";
+import { BUSINESS, SOCIAL_PROFILES } from "@/lib/business";
 
 export async function SiteFooter() {
   const locale = (await getLocale()) as AppLocale;
@@ -98,15 +98,20 @@ export async function SiteFooter() {
             >
               {BUSINESS.phoneDisplay}
             </a>
-            <a
-              href={BUSINESS.instagramUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              dir="ltr"
-              className="hover:text-cocoa focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
-            >
-              {BUSINESS.instagramHandle}
-            </a>
+            {SOCIAL_PROFILES.map((profile) => (
+              <a
+                key={profile.name}
+                href={profile.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                dir="ltr"
+                className="hover:text-cocoa focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+              >
+                {/* Both accounts share the same handle, so the platform name
+                    is what actually distinguishes these two links. */}
+                {profile.name} {profile.handle}
+              </a>
+            ))}
           </address>
 
           <h2 className="mt-6 text-sm font-semibold uppercase tracking-wide text-cocoa">

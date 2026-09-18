@@ -4,7 +4,11 @@ import type { AppLocale } from "@/i18n/routing";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { ContactForm } from "@/components/contact/contact-form";
 import { LocalBusinessJsonLd } from "@/components/seo/json-ld";
-import { BUSINESS, BUSINESS_ADDRESS_ONE_LINE } from "@/lib/business";
+import {
+  BUSINESS,
+  BUSINESS_ADDRESS_ONE_LINE,
+  SOCIAL_PROFILES,
+} from "@/lib/business";
 import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -86,19 +90,24 @@ export default async function ContactPage({
 
           <section className="rounded-2xl border border-line bg-paper p-6">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-cocoa">
-              {t("instagramTitle")}
+              {t("socialTitle")}
             </h2>
-            <p className="mt-3">
-              <a
-                href={BUSINESS.instagramUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                dir="ltr"
-                className="text-base font-medium text-cocoa underline underline-offset-4 transition-colors hover:text-gold-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
-              >
-                {t("instagram")}
-              </a>
-            </p>
+            <ul className="mt-3 flex flex-col gap-2">
+              {SOCIAL_PROFILES.map((profile) => (
+                <li key={profile.name}>
+                  <a
+                    href={profile.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    dir="ltr"
+                    className="text-base font-medium text-cocoa underline underline-offset-4 transition-colors hover:text-gold-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                  >
+                    {profile.name}{" "}
+                    <span className="text-cocoa-soft">{profile.handle}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
           </section>
         </div>
 
