@@ -19,7 +19,7 @@ import { NextResponse } from "next/server";
  */
 
 // Bumped by hand, so a response proves which commit is actually serving.
-const BUILD_MARKER = "diag-1";
+const BUILD_MARKER = "diag-2-jose-override";
 
 function expectedToken(): string | null {
   const secret = process.env.AUTH_SECRET;
