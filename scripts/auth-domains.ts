@@ -17,8 +17,8 @@
  * local development.
  */
 import "dotenv/config";
-import { GoogleAuth, type AuthClient } from "google-auth-library";
 import { describeTarget } from "./target";
+import { googleApiClient } from "./google-auth";
 
 const green = (s: string) => `\x1b[32m${s}\x1b[0m`;
 const red = (s: string) => `\x1b[31m${s}\x1b[0m`;
@@ -61,9 +61,7 @@ async function main() {
   }
 
   const project = target.projectId;
-  const client = (await new GoogleAuth({
-    scopes: ["https://www.googleapis.com/auth/cloud-platform"],
-  }).getClient()) as AuthClient;
+  const client = await googleApiClient();
 
   const configUrl = `https://identitytoolkit.googleapis.com/admin/v2/projects/${project}/config`;
 

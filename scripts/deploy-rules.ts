@@ -22,8 +22,9 @@
  */
 import "dotenv/config";
 import { readFileSync } from "node:fs";
-import { GoogleAuth, type AuthClient } from "google-auth-library";
+import type { AuthClient } from "google-auth-library";
 import { describeTarget } from "./target";
+import { googleApiClient } from "./google-auth";
 
 const RULES_FILE = "firestore.rules";
 const INDEXES_FILE = "firestore.indexes.json";
@@ -308,9 +309,7 @@ async function main() {
   const project = target.projectId;
   console.log(bold(`\nPublishing rules and indexes to ${target.label}\n`));
 
-  client = (await new GoogleAuth({
-    scopes: ["https://www.googleapis.com/auth/cloud-platform"],
-  }).getClient()) as AuthClient;
+  client = await googleApiClient();
 
   await deployRules(project);
   console.log("");
