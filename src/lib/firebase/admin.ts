@@ -47,42 +47,79 @@ const globalForFirebase = globalThis as unknown as {
   __palacioDoceFirebase?: { app: App; db: Firestore; auth: Auth };
 };
 
+/**
+ * The emulator host variables, which the Firebase SDKs read directly.
+ *
+ * Both are listed because they are independent: Firestore and Auth each have
+ * their own, and setting one without the other is a half-configured state that
+ * fails in a different place than you would expect. An empty string counts as
+ * unset — that is how `.env.production` switches them off, since it is layered
+ * on top of `.env` rather than replacing it.
+ */
+const EMULATOR_VARS = [
+  "FIRESTORE_EMULATOR_HOST",
+  "FIREBASE_AUTH_EMULATOR_HOST",
+] as const;
+
+function emulatorVarsInUse(): string[] {
+  return EMULATOR_VARS.filter((name) => Boolean(process.env[name]));
+}
+
 function usingEmulator(): boolean {
   return Boolean(process.env.FIRESTORE_EMULATOR_HOST);
 }
 
 /**
- * Refuses the one configuration that is always a mistake, and announces which
+ * Refuses the configurations that are always a mistake, and announces which
  * database the process is about to use.
  *
- * The mistake: a real project id together with an emulator host. Firebase's own
+ * Two distinct mistakes are caught.
+ *
+ * **A real project id together with an emulator host.** Firebase's own
  * convention is that a project id starting with `demo-` cannot exist for real,
  * so `demo-palaciodoce` plus an emulator is deliberate local work, while
- * `palaciodoce` plus an emulator is a leftover environment variable.
+ * `palaciodoce` plus an emulator is a leftover environment variable. It earns a
+ * hard failure because of how quietly it goes wrong: the emulator serves an
+ * empty datastore under any project id, without complaint. Prerendered pages
+ * keep serving their build-time content, so the site looks healthy while
+ * everything rendered on demand returns "not found".
  *
- * It is worth a hard failure because of how quietly it goes wrong. The emulator
- * happily serves an empty datastore under any project id — no error, no warning.
- * Prerendered pages keep serving their build-time content, so the site looks
- * fine while every page rendered on demand returns "not found". Diagnosing that
- * from the outside takes a long time; failing here takes a second.
+ * **One emulator variable set without the other.** Firestore and Auth read
+ * separate variables, so this splits the process across two backends. With only
+ * the Auth one set, reads and writes go to the real project while sign-in tries
+ * to reach a local emulator that is not there — the storefront works perfectly
+ * and only the admin login fails, which is a long way from the cause.
  *
- * Note `dotenv` never overrides a variable already in the environment, which is
- * how the leftover survives in the first place.
+ * `dotenv` never overrides a variable already in the environment, which is how
+ * a leftover survives long enough to cause either of these.
  */
 function assertSaneTarget(projectId: string) {
-  if (usingEmulator() && !projectId.startsWith("demo-")) {
+  const inUse = emulatorVarsInUse();
+
+  if (inUse.length > 0 && !projectId.startsWith("demo-")) {
     throw new Error(
       `Refusing to start: FIREBASE_PROJECT_ID is "${projectId}" but ` +
-        `FIRESTORE_EMULATOR_HOST is set to "${process.env.FIRESTORE_EMULATOR_HOST}".\n\n` +
-        "That combination points a real project id at the local emulator, which\n" +
-        "serves an empty database without complaining — prerendered pages keep\n" +
-        "working while everything dynamic returns 404.\n\n" +
+        `${inUse.join(" and ")} ${inUse.length === 1 ? "is" : "are"} set.\n\n` +
+        "That points a real project id at a local emulator, which serves an\n" +
+        "empty database without complaining — prerendered pages keep working\n" +
+        "while everything dynamic returns 404.\n\n" +
         "Either:\n" +
         "  - use the emulator, and set FIREBASE_PROJECT_ID=demo-palaciodoce, or\n" +
-        "  - use the real project, and unset FIRESTORE_EMULATOR_HOST and\n" +
-        "    FIREBASE_AUTH_EMULATOR_HOST.\n\n" +
+        `  - use the real project, and unset ${EMULATOR_VARS.join(" and ")}.\n\n` +
         "A stale exported variable is the usual cause: `dotenv` does not override\n" +
         "what is already in the environment, so .env loses to your shell.",
+    );
+  }
+
+  if (inUse.length === 1) {
+    throw new Error(
+      `Refusing to start: ${inUse[0]} is set but ` +
+        `${EMULATOR_VARS.find((name) => name !== inUse[0])} is not.\n\n` +
+        "Firestore and Auth read separate variables, so this would split the\n" +
+        "process across two backends — one talking to the emulator, the other to\n" +
+        "the real project. The half that is misrouted fails on its own, far from\n" +
+        "the cause.\n\n" +
+        "Set both, or neither.",
     );
   }
 
